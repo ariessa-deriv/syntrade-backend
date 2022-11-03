@@ -24,5 +24,6 @@ model users {
   email          String   @unique @db.VarChar(255)
   password       String   @db.VarChar(12)
   wallet_balance Float
+  date_joined    DateTime @db.Timestamp(6)
   trades         trades[]
 }
