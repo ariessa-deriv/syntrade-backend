@@ -4,15 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon",
+    "build": "rimraf ./build && tsc",
+    "start": "npm run build && node build/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "prisma": "^4.5.0"
+    "nodemon": "^2.0.20",
+    "prisma": "^4.5.0",
+    "rimraf": "^3.0.2"
   },
   "dependencies": {
     "@prisma/client": "^4.5.0",
+    "apollo-server-express": "^3.11.1",
+    "express": "^4.18.2",
+    "graphql": "^16.6.0",
     "ws": "^8.10.0"
-  }
+  },
+  "type": "module"
 }
