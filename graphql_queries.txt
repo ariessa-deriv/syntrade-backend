@@ -1,0 +1,88 @@
+# Get all users
+{
+  users {
+    user_id
+    email
+    password
+    wallet_balance
+    date_joined
+  }
+}
+
+# Get user by user_id
+{
+  user(id: 4) {
+    user_id
+    email
+    password
+    wallet_balance
+    date_joined
+  }
+}
+
+# Get all trades
+{
+  trades {
+    trade_id
+    user_id
+    type
+    currency
+    trade_time
+    trade_type
+    is_debit
+    current_wallet_balance
+  }
+}
+
+# Get trade by trade id
+{
+  trade(id: "2") {
+    trade_id
+    user_id
+    type
+    currency
+    trade_time
+    trade_type
+    is_debit
+    current_wallet_balance
+  }
+}
+
+# Create new user
+mutation {
+  createUser(email: "testlol@gmail.com", password: "testpassword") {
+    email,
+    password
+  }
+}
+
+# Create new trade
+mutation {
+  createTrade(user_id: 2, type: 1, trade_type: "buy", is_debit: true, current_wallet_balance: 9000) {
+    user_id,
+    type,
+    trade_type,
+    is_debit,
+    current_wallet_balance,
+  }
+}
+
+# Edit user
+mutation {
+    updateUser(user_id: 2, email: "newemail@icloud.com", password: "P4ssword! ", wallet_balance: 4000) {
+        user_id,
+        email,
+        password,
+        wallet_balance
+    }
+}
+
+# Delete user
+mutation {
+    deleteUser(user_id: 3) {
+        user_id
+        email
+        wallet_balance
+        date_joined
+    }
+}
