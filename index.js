@@ -117,31 +117,6 @@ const QueryRoot = new graphql.GraphQLObjectType({
 const MutationRoot = new graphql.GraphQLObjectType({
   name: "Mutation",
   fields: () => ({
-    createUser: {
-      type: User,
-      args: {
-        email: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
-        password: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
-      },
-      resolve: async (parent, args, context, resolveInfo) => {
-        // normalize email address
-        const normalisedEmail = args.email.trim().toLowerCase();
-        // hash the password
-        const hashedPassword = await bcrypt.hash(args.password, 10);
-        console.log(`normalised: ${normalisedEmail}`);
-        console.log(`hash: ${hashedPassword}`);
-        try {
-          return (
-            await client.query(
-              "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
-              [normalisedEmail, hashedPassword]
-            )
-          ).rows[0];
-        } catch (err) {
-          throw new Error("Failed to insert new user");
-        }
-      },
-    },
     createTrade: {
       type: Trade,
       args: {
