@@ -13,6 +13,8 @@ const {
   GraphQLList,
   GraphQLSchema,
 } = graphql;
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 dotenv.config();
 
 // Connect to database
@@ -31,7 +33,7 @@ const User = new graphql.GraphQLObjectType({
   extensions: { joinMonster: { sqlTable: "users", uniqueKey: "user_id" } },
   fields: () => ({
     user_id: { type: graphql.GraphQLString },
-    email: { type: GraphQLString },
+    email: { type: scalarResolvers.EmailAddress },
     password: { type: GraphQLString },
     wallet_balance: { type: GraphQLFloat },
     date_joined: { type: scalarResolvers.BigInt },
@@ -122,11 +124,17 @@ const MutationRoot = new graphql.GraphQLObjectType({
         password: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
+        // normalize email address
+        const normalisedEmail = args.email.trim().toLowerCase();
+        // hash the password
+        const hashedPassword = await bcrypt.hash(args.password, 10);
+        console.log(`normalised: ${normalisedEmail}`);
+        console.log(`hash: ${hashedPassword}`);
         try {
           return (
             await client.query(
               "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
-              [args.email, args.password]
+              [normalisedEmail, hashedPassword]
             )
           ).rows[0];
         } catch (err) {
@@ -203,6 +211,106 @@ const MutationRoot = new graphql.GraphQLObjectType({
         } catch (err) {
           throw new Error("Failed to insert new user");
         }
+      },
+    },
+    signup: {
+      type: User,
+      args: {
+        email: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
+        password: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
+      },
+      resolve: async (parent, args, context, resolveInfo) => {
+        // Normalise email address
+        const normalisedEmail = args.email.trim().toLowerCase();
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(args.password, 10);
+        // Check if email has been registered or not
+        const registeredUser = await client.query(
+          `SELECT * FROM users WHERE email = '${normalisedEmail}' `
+        );
+
+        console.log(registeredUser.rowCount);
+
+        if (registeredUser.rowCount > 0) {
+          throw new Error("Email is already registered");
+        }
+
+        try {
+          const user = await client.query(
+            `INSERT INTO users (email, password) VALUES ('${normalisedEmail}', '${hashedPassword}') RETURNING *`
+          );
+          console.log(user);
+
+          const token = jwt.sign(
+            {
+              user_id: user.user_id,
+            },
+            process.env.JWT_SECRET
+          );
+
+          console.log(
+            "========================================================"
+          );
+          console.log(token);
+
+          // Create and return the json web token
+          // return user.rows[0];
+          return jwt.sign(
+            {
+              user_id: user.user_id,
+            },
+            process.env.JWT_SECRET
+          );
+        } catch (err) {
+          console.log(err);
+          throw new Error("Error creating account");
+        }
+      },
+    },
+    login: {
+      type: User,
+      args: {
+        email: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
+        password: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
+      },
+      resolve: async (parent, args, context, resolveInfo) => {
+        // Normalise email address
+        const normalisedEmail = args.email.trim().toLowerCase();
+
+        // Find user by email address
+        const user = await client.query(
+          `SELECT * FROM users WHERE email = '${normalisedEmail}'`
+        );
+
+        console.log("============");
+        console.log("user here");
+        console.log(user);
+
+        // if there is no user, throw an authentication error
+        if (!user) {
+          throw new Error("Error signing in");
+        }
+
+        console.log("args.password");
+        console.log(args.password);
+        console.log("user.rows[0]['password']");
+        console.log(user.rows[0]["password"]);
+
+        // if the passwords don't match, throw an authentication error
+        const valid = await bcrypt.compare(
+          args.password,
+          user.rows[0]["password"]
+        );
+        if (!valid) {
+          throw new Error("Incorrect password");
+        }
+        // create and return the json web token
+        return jwt.sign(
+          {
+            id: user._id,
+          },
+          process.env.JWT_SECRET
+        );
       },
     },
   }),
