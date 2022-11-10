@@ -86,3 +86,19 @@ mutation {
         date_joined
     }
 }
+
+# Sign up
+mutation {
+  signup(email: "randomemail@gmail.com", password: "ABC123!") {
+    email,
+    password
+  }
+}
+
+# Log in
+mutation {
+  login(email: "randomemail@gmail.com", password: "ABC123!") {
+    email,
+    password
+  }
+}
