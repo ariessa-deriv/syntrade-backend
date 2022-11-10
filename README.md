@@ -119,9 +119,9 @@ REFERENCES users (user_id) ON DELETE CASCADE
 ```
 INSERT INTO users (email, password)
 VALUES
-('test123@gmail.com', 'test123!'),
-('johndoe@gmail.com', 'P4ssword!'),
-('janet@gmail.com', 'myP4ssword!')
+('test123@gmail.com', '$2b$10$WOwa8qQuia0.MtkXLSTbqOsCBVFhqggB5nW5eo9Q9.rvqZRHFmlRG'),
+('johndoe@gmail.com', '$2b$10$Z7wSUnEXLLs1kpo2sSWfwe..pTuruIboPgiZ5U6wWAQTbZcTwlbwC'),
+('janet@gmail.com', '$2b$10$eKRKvtkQdIVeVQ30PnsfdOxKc3zAWgezWUM9dKtp.72Q3hHrR7VRq')
 RETURNING *;
 ```
 
@@ -134,6 +134,16 @@ VALUES
 (2, 2, 'sell', false, 8888),
 (2, 4, 'buy', true, 8000)
 RETURNING *;
+```
+
+13. Inside syntrade-backend folder, install npm packages
+```
+npm install
+```
+
+14. Run the GraphQL API server
+```
+npm run dev
 ```
 
 Open [http://localhost:4000](http://localhost:400) with your browser to use GraphiQL.
