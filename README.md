@@ -8,6 +8,7 @@
 ## API endpoints
 
 - Query
+  - me
   - users
   - user
   - trades
@@ -19,6 +20,7 @@
   - updateUser
   - deleteUser
   - createTrade
+  - forgotPassword
 
 </br>
 
@@ -86,35 +88,47 @@ CREATE DATABASE syntrade;
 \c syntrade
 ```
 
-9. Create a table called users
+9. Create enum type called synthetic_type
+
+```
+CREATE TYPE synthetic_type AS ENUM ( 'Boom 100', 'Boom 300', 'Boom 500', 'Crash 100', 'Crash 300', 'Crash 500', 'Volatility 10', 'Volatility 25' );
+```
+
+10. Create enum type called trade_type
+
+```
+CREATE TYPE trade_type AS ENUM ( 'buy', 'sell' );
+```
+
+11. Create a table called users
 
 ```
 CREATE TABLE users (
 user_id serial PRIMARY KEY,
 email VARCHAR (255) UNIQUE NOT NULL,
-password VARCHAR (12) NOT NULL,
-wallet_balance FLOAT NOT NULL DEFAULT 10000,
+password CHAR (60) NOT NULL,
+wallet_balance FLOAT NOT NULL DEFAULT 10000.00,
 date_joined BIGINT NOT NULL DEFAULT extract(epoch from now()));
 ```
 
-10. Create a table called trades
+12. Create a table called trades
 
 ```
 CREATE TABLE trades (
 trade_id serial PRIMARY KEY,
 user_id serial,
-type INT NOT NULL,
-currency VARCHAR (20) NOT NULL DEFAULT 'usd',
+synthetic_type synthetic_type NOT NULL,
+currency CHAR (3) NOT NULL DEFAULT 'usd',
 trade_time BIGINT NOT NULL DEFAULT extract(epoch from now()),
-trade_type VARCHAR (20) NOT NULL,
-is_debit boolean NOT NULL,
+trade_type trade_type NOT NULL,
+trade_result FLOAT NOT NULL,
 current_wallet_balance FLOAT NOT NULL,
 FOREIGN KEY (user_id)
 REFERENCES users (user_id) ON DELETE CASCADE
 );
 ```
 
-11. Add new users into users table
+13. Add new users into users table
 
 ```
 INSERT INTO users (email, password)
@@ -125,23 +139,25 @@ VALUES
 RETURNING *;
 ```
 
-12. Add new trades into table trades
+14. Add new trades into table trades
 
 ```
-INSERT INTO trades (user_id, type, trade_type, is_debit, current_wallet_balance)
+INSERT INTO trades (user_id, synthetic_type, trade_type, trade_result, current_wallet_balance)
 VALUES
-(1, 1, 'buy', true, 9000),
-(2, 2, 'sell', false, 8888),
-(2, 4, 'buy', true, 8000)
+(1, 'Boom 100', 'buy', -1000.87, 9000),
+(2, 'Volatility 10', 'sell', -2000.99, 8888),
+(3, 'Crash 500', 'buy', +2345.00, 8000)
 RETURNING *;
 ```
 
-13. Inside syntrade-backend folder, install npm packages
+15. Inside syntrade-backend folder, install npm packages
+
 ```
 npm install
 ```
 
-14. Run the GraphQL API server
+16. Run the GraphQL API server
+
 ```
 npm run dev
 ```
