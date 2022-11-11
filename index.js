@@ -1,4 +1,5 @@
 const express = require("express");
+var cors = require("cors");
 const { graphqlHTTP } = require("express-graphql");
 const dotenv = require("dotenv");
 const graphql = require("graphql");
@@ -12,9 +13,11 @@ const {
   GraphQLFloat,
   GraphQLList,
   GraphQLSchema,
+  GraphQLEnumType,
 } = graphql;
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
 dotenv.config();
 
 // Connect to database
@@ -45,34 +48,70 @@ const User = new graphql.GraphQLObjectType({
   }),
 });
 
-User._typeConfig = {
-  sqlTable: "users",
-  uniqueKey: "user_id",
-};
-
 const Trade = new graphql.GraphQLObjectType({
   name: "Trade",
   extensions: { joinMonster: { sqlTable: "trades", uniqueKey: "trade_id" } },
   fields: () => ({
     trade_id: { type: GraphQLID },
     user_id: { type: GraphQLID },
-    type: { type: graphql.GraphQLInt },
-    currency: { type: GraphQLString },
+    synthetic_type: { type: SyntheticTypeEnum },
+    currency: { type: scalarResolvers.Currency },
     trade_time: { type: scalarResolvers.BigInt },
-    trade_type: { type: GraphQLString },
-    is_debit: { type: GraphQLBoolean },
-    current_wallet_balance: { type: GraphQLFloat },
+    trade_type: { type: TradeTypeEnum },
+    trade_result: { type: GraphQLFloat },
+    current_wallet_balance: { type: GraphQLString },
   }),
 });
 
-Trade._typeConfig = {
-  sqlTable: "trades",
-  uniqueKey: "trade_id",
-};
+const SyntheticTypeEnum = new GraphQLEnumType({
+  name: "SyntheticTypeEnum",
+  values: {
+    "Boom 100": {
+      value: 1,
+    },
+    "Boom 300": {
+      value: 2,
+    },
+    "Boom 500": {
+      value: 3,
+    },
+    "Crash 100": {
+      value: 4,
+    },
+    "Crash 300": {
+      value: 5,
+    },
+    "Crash 500": {
+      value: 6,
+    },
+    "Volatility 10": {
+      value: 7,
+    },
+    "Volatility 25": {
+      value: 8,
+    },
+  },
+});
+
+const TradeTypeEnum = new graphql.GraphQLEnumType({
+  name: "TradeTypeEnum",
+  values: {
+    buy: {
+      value: 1,
+    },
+    sell: {
+      value: 2,
+    },
+  },
+});
 
 const QueryRoot = new graphql.GraphQLObjectType({
   name: "Query",
   fields: () => ({
+    me: {
+      type: User,
+      resolve: (parent, args, context, resolveInfo) => {},
+    },
     users: {
       type: new graphql.GraphQLList(User),
       resolve: (parent, args, context, resolveInfo) => {
@@ -121,10 +160,10 @@ const MutationRoot = new graphql.GraphQLObjectType({
       type: Trade,
       args: {
         user_id: { type: graphql.GraphQLNonNull(graphql.GraphQLID) },
-        type: { type: graphql.GraphQLNonNull(graphql.GraphQLInt) },
-        trade_type: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
-        is_debit: {
-          type: graphql.GraphQLNonNull(graphql.GraphQLBoolean),
+        synthetic_type: { type: graphql.GraphQLNonNull(SyntheticTypeEnum) },
+        trade_type: { type: graphql.GraphQLNonNull(TradeTypeEnum) },
+        trade_result: {
+          type: graphql.GraphQLNonNull(graphql.GraphQLFloat),
         },
         current_wallet_balance: {
           type: graphql.GraphQLNonNull(graphql.GraphQLFloat),
@@ -132,14 +171,15 @@ const MutationRoot = new graphql.GraphQLObjectType({
       },
       resolve: async (parent, args, context, resolveInfo) => {
         try {
+          // TODO: Get user id from JWT
           return (
             await client.query(
-              "INSERT INTO trades (user_id, type, trade_type, is_debit, current_wallet_balance) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+              "INSERT INTO trades (user_id, synthetic_type, trade_type, trade_result, current_wallet_balance) VALUES ($1, $2, $3, $4, $5) RETURNING *",
               [
                 args.user_id,
-                args.type,
+                args.synthetic_type,
                 args.trade_type,
-                args.is_debit,
+                args.trade_result,
                 args.current_wallet_balance,
               ]
             )
@@ -153,12 +193,13 @@ const MutationRoot = new graphql.GraphQLObjectType({
       type: User,
       args: {
         user_id: { type: graphql.GraphQLNonNull(graphql.GraphQLID) },
-        email: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
+        email: { type: graphql.GraphQLNonNull(scalarResolvers.EmailAddress) },
         password: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
         wallet_balance: { type: graphql.GraphQLNonNull(graphql.GraphQLFloat) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         try {
+          // TODO: Get user id from JWT
           return (
             await client.query(
               "UPDATE users SET email = $2, password = $3, wallet_balance = $4 WHERE user_id = $1 RETURNING *",
@@ -177,6 +218,7 @@ const MutationRoot = new graphql.GraphQLObjectType({
       },
       resolve: async (parent, args, context, resolveInfo) => {
         try {
+          // TODO: Get user id from JWT
           return (
             await client.query(
               "DELETE FROM users WHERE user_id = $1 RETURNING *",
@@ -191,12 +233,17 @@ const MutationRoot = new graphql.GraphQLObjectType({
     signup: {
       type: User,
       args: {
-        email: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
+        email: { type: graphql.GraphQLNonNull(scalarResolvers.EmailAddress) },
         password: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         // Normalise email address
         const normalisedEmail = args.email.trim().toLowerCase();
+
+        // TODO: Check email validity
+
+        // TODO: Check password validity
+
         // Hash the password
         const hashedPassword = await bcrypt.hash(args.password, 10);
         // Check if email has been registered or not
@@ -218,7 +265,7 @@ const MutationRoot = new graphql.GraphQLObjectType({
 
           const token = jwt.sign(
             {
-              user_id: user.user_id,
+              id: user.user_id,
             },
             process.env.JWT_SECRET
           );
@@ -232,7 +279,7 @@ const MutationRoot = new graphql.GraphQLObjectType({
           // return user.rows[0];
           return jwt.sign(
             {
-              user_id: user.user_id,
+              id: user.user_id,
             },
             process.env.JWT_SECRET
           );
@@ -245,7 +292,7 @@ const MutationRoot = new graphql.GraphQLObjectType({
     login: {
       type: User,
       args: {
-        email: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
+        email: { type: graphql.GraphQLNonNull(scalarResolvers.EmailAddress) },
         password: { type: graphql.GraphQLNonNull(graphql.GraphQLString) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
@@ -288,6 +335,19 @@ const MutationRoot = new graphql.GraphQLObjectType({
         );
       },
     },
+    forgotPassword: {
+      type: User,
+      args: {
+        email: { type: graphql.GraphQLNonNull(scalarResolvers.EmailAddress) },
+      },
+      resolve: async (parent, args, context, resolveInfo) => {
+        // Find user by email
+        // If email exists in database, generate a random password to user
+        // Update user's password with newly generated random password
+        // Send email to user with link to password reset page (link expires in 10 mins)
+        return "TODO: forgotPassword";
+      },
+    },
   }),
 });
 
@@ -297,12 +357,21 @@ const schema = new graphql.GraphQLSchema({
 });
 
 var app = express();
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+
 app.use(
   "/",
-  graphqlHTTP({
+  // bodyParser.json(),
+  graphqlHTTP(async (req, res, graphQLParams) => ({
     schema: schema,
     graphiql: true,
-  })
+    // context: {
+    //   SECRET,
+    //   SECRET_2,
+    //   user: req.user,
+    //   res,
+    // },
+  }))
 );
 
 app.listen(4000);
