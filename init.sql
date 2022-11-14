@@ -116,10 +116,18 @@ VALUES
 ('janet@gmail.com', '$2b$10$eKRKvtkQdIVeVQ30PnsfdOxKc3zAWgezWUM9dKtp.72Q3hHrR7VRq')
 RETURNING *;
 
--- Add new trades into table trades
+-- Add new buy trades into table trades
 INSERT INTO trades (user_id, synthetic_type, trade_type, trade_result, current_wallet_balance) 
 VALUES 
-(1, 'boom_100', 'buy', -1000.87, 9000),
-(2, 'volatility_10', 'sell', -2000.99, 8888),
-(3, 'crash_500', 'buy', +2345.00, 8000)
+(1, 'boom_100_rise', 'buy', -1000.87, 9000),
+(2, 'volatility_10_even', 'buy', -2000.99, 8888),
+(3, 'crash_500_fall', 'buy', -2345.00, 8000)
+RETURNING *;
+
+-- Add new sell trades into table trades
+INSERT INTO trades (user_id, synthetic_type, trade_type, trade_result, current_wallet_balance) 
+VALUES 
+(1, 'boom_100_rise', 'sell', +1000.87, 9000),
+(2, 'volatility_10_even', 'sell', +2000.99, 8888),
+(3, 'crash_500_fall', 'sell', +2345.00, 8000)
 RETURNING *;
