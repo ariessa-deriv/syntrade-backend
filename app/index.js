@@ -16,8 +16,6 @@ var socket = io.connect(
   }
 );
 
-console.log(process.env.FLASK_HOST);
-
 // Add a connect listener
 socket.on("connect", () => {
   console.log("Websocket client is connected to Websocket server"); // true
