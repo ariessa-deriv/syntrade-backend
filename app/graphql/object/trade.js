@@ -10,7 +10,6 @@ const { resolvers: scalarResolvers } = require("graphql-scalars");
 
 const Trade = new GraphQLObjectType({
   name: "Trade",
-  extensions: { joinMonster: { sqlTable: "trades", uniqueKey: "trade_id" } },
   fields: () => ({
     trade_id: { type: GraphQLInt },
     user_id: { type: GraphQLInt },

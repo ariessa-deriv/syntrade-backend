@@ -1,11 +1,14 @@
-const { GraphQLObjectType, GraphQLInt, GraphQLString, GraphQLFloat } = require("graphql");
+const {
+  GraphQLObjectType,
+  GraphQLInt,
+  GraphQLString,
+  GraphQLFloat,
+} = require("graphql");
 const { resolvers: scalarResolvers } = require("graphql-scalars");
-const joinMonster = require("join-monster");
 const Trade = require("./trade");
 
 const User = new GraphQLObjectType({
   name: "User",
-  extensions: { joinMonster: { sqlTable: "users", uniqueKey: "user_id" } },
   fields: () => ({
     user_id: { type: GraphQLInt },
     email: { type: scalarResolvers.EmailAddress },
@@ -14,8 +17,6 @@ const User = new GraphQLObjectType({
     date_joined: { type: scalarResolvers.BigInt },
     trades: {
       type: Trade,
-      sqlJoin: (userTable, tradeTable, args) =>
-        `${userTable}.user_id = ${tradeTable}.user_id`,
     },
   }),
 });
