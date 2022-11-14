@@ -1,0 +1,8 @@
+flask
+numpy
+apscheduler
+flask_socketio
+gevent
+gevent-websocket
+python-dotenv
+datetime

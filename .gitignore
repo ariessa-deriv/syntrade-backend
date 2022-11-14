@@ -1,5 +1,11 @@
+# Ignore .env files
+*.env
+
+# Ignore node_modules
 node_modules/
 
-.env
+# Ignore postgres folder
+postgres/
 
-package-lock.json
+# Ignore
+redis/

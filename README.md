@@ -5,161 +5,182 @@
 </p>
 </br>
 
-## API endpoints
-
-- Query
-  - me
-  - users
-  - user
-  - trades
-  - trade
-
-* Mutation
-  - signup
-  - login
-  - updateUser
-  - deleteUser
-  - createTrade
-  - forgotPassword
-
-</br>
-
 ## Technologies Used
 
-- Express
-- GraphQL
+- [Express](https://www.npmjs.com/package/express)
+- [GraphQL](https://www.npmjs.com/package/graphql)
+- [SocketIO Client](https://www.npmjs.com/package/socket.io-client)
 
 </br>
 
 ## Run It Locally
 
-1. Clone repository
+Clone repository
 
 ```
 git clone git@github.com:ariessa-deriv/syntrade-backend.git
 ```
 
-2. Inside syntrade-backend folder, create .env file
+Create .env file and insert values
 
 ```
-HOST=""
-PORT=""
-POSTGRESQL_DATABASE=""
-POSTGRESQL_USER=""
-POSTGRESQL_PASSWORD=""
+POSTGRES_HOST=""
+POSTGRES_PORT=""
+POSTGRES_DATABASE=""
+POSTGRES_USER=""
+POSTGRES_PASSWORD=""
+REDIS_PASSWORD=""
 JWT_SECRET=""
 ```
 
-3. Inside syntrade-backend folder, start service defined in docker-compose.yml
+Build and start Docker containers in detached mode
 
-```
-docker-compose up -d
-```
+- For development
 
-4. Get the container ID for the recently created Docker container
+  ```
+  docker-compose --env-file .env --file docker-compose-dev.yml up -d
+  ```
 
-```
-docker ps -a
-```
+  Open [http://localhost:4000](http://localhost:4000) with your browser to use GraphiQL.
 
-5. Start a Bash session inside the Docker container
+- For production
+  ```
+  docker-compose --env-file .env --file docker-compose-prod.yml up -d
+  ```
 
-```
-docker exec -it $container_id bash
-```
+</br>
 
-Example: docker exec -it 5c83c63a56cc bash
+## API endpoints
 
-6. Connect to Postgresql host
+### Query
 
-```
-psql -h localhost -p 5432 -U test-user -W
-```
+- me
+  ```
+  // TODO
+  ```
+- users
+  ```
+  # Get all users
+  {
+    users {
+      user_id
+      email
+      password
+      wallet_balance
+      date_joined
+    }
+  }
+  ```
+- user
 
-7. Create a database called syntrade
+  ```
+  # Get user by user_id
+  {
+    user(user_id: 1) {
+      user_id
+      email
+      password
+      wallet_balance
+      date_joined
+    }
+  }
+  ```
 
-```
-CREATE DATABASE syntrade;
-```
+- trades
+  ```
+  # Get all trades
+  {
+    trades {
+      trade_id
+      user_id
+      synthetic_type
+      currency
+      trade_time
+      trade_type
+      trade_result
+      current_wallet_balance
+    }
+  }
+  ```
+- trade
+  ```
+  # Get trade by trade id
+  {
+    trade(trade_id: 1) {
+      trade_id
+      user_id
+      synthetic_type
+      currency
+      trade_time
+      trade_type
+      trade_result
+      current_wallet_balance
+    }
+  }
+  ```
 
-8. Connect to syntrade database
+### Mutation
 
-```
-\c syntrade
-```
+- signup
+  ```
+  # Sign up
+  mutation {
+    signup(email: "randomemail@gmail.com", password: "ABC123!") {
+      email,
+      password
+    }
+  }
+  ```
+- login
+  ```
+  # Login
+  mutation {
+    login(email: "randomemail@gmail.com", password: "ABC123!") {
+      email,
+      password
+    }
+  }
+  ```
+- updateUser
+  ```
+  # Update user details
+  mutation {
+      updateUser(user_id: 2, email: "newemail@icloud.com", password: "P4ssword! ", wallet_balance: 4000) {
+          user_id,
+          email,
+          password,
+          wallet_balance
+      }
+  }
+  ```
+- deleteUser
+  ```
+  # Delete user by user_id. This will also delete user's trades
+  mutation {
+      deleteUser(user_id: 3) {
+          user_id
+          email
+          wallet_balance
+          date_joined
+      }
+  }
+  ```
+- createTrade
+  ```
+  # Create new trade
+  mutation {
+    createTrade(user_id: 1, synthetic_type: "boom_100", trade_type: "buy", trade_result: -1000.80, current_wallet_balance: 9000) {
+      user_id,
+      synthetic_type,
+      trade_type,
+      trade_result,
+      current_wallet_balance,
+    }
+  }
+  ```
+- forgotPassword
+  ```
+  // TODO
+  ```
 
-9. Create enum type called synthetic_type
-
-```
-CREATE TYPE synthetic_type AS ENUM ( 'Boom 100', 'Boom 300', 'Boom 500', 'Crash 100', 'Crash 300', 'Crash 500', 'Volatility 10', 'Volatility 25' );
-```
-
-10. Create enum type called trade_type
-
-```
-CREATE TYPE trade_type AS ENUM ( 'buy', 'sell' );
-```
-
-11. Create a table called users
-
-```
-CREATE TABLE users (
-user_id serial PRIMARY KEY,
-email VARCHAR (255) UNIQUE NOT NULL,
-password CHAR (60) NOT NULL,
-wallet_balance FLOAT NOT NULL DEFAULT 10000.00,
-date_joined BIGINT NOT NULL DEFAULT extract(epoch from now()));
-```
-
-12. Create a table called trades
-
-```
-CREATE TABLE trades (
-trade_id serial PRIMARY KEY,
-user_id serial,
-synthetic_type synthetic_type NOT NULL,
-currency CHAR (3) NOT NULL DEFAULT 'usd',
-trade_time BIGINT NOT NULL DEFAULT extract(epoch from now()),
-trade_type trade_type NOT NULL,
-trade_result FLOAT NOT NULL,
-current_wallet_balance FLOAT NOT NULL,
-FOREIGN KEY (user_id)
-REFERENCES users (user_id) ON DELETE CASCADE
-);
-```
-
-13. Add new users into users table
-
-```
-INSERT INTO users (email, password)
-VALUES
-('test123@gmail.com', '$2b$10$WOwa8qQuia0.MtkXLSTbqOsCBVFhqggB5nW5eo9Q9.rvqZRHFmlRG'),
-('johndoe@gmail.com', '$2b$10$Z7wSUnEXLLs1kpo2sSWfwe..pTuruIboPgiZ5U6wWAQTbZcTwlbwC'),
-('janet@gmail.com', '$2b$10$eKRKvtkQdIVeVQ30PnsfdOxKc3zAWgezWUM9dKtp.72Q3hHrR7VRq')
-RETURNING *;
-```
-
-14. Add new trades into table trades
-
-```
-INSERT INTO trades (user_id, synthetic_type, trade_type, trade_result, current_wallet_balance)
-VALUES
-(1, 'Boom 100', 'buy', -1000.87, 9000),
-(2, 'Volatility 10', 'sell', -2000.99, 8888),
-(3, 'Crash 500', 'buy', +2345.00, 8000)
-RETURNING *;
-```
-
-15. Inside syntrade-backend folder, install npm packages
-
-```
-npm install
-```
-
-16. Run the GraphQL API server
-
-```
-npm run dev
-```
-
-Open [http://localhost:4000](http://localhost:400) with your browser to use GraphiQL.
+</br>

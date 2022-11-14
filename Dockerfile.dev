@@ -1,0 +1,11 @@
+FROM node:14-alpine
+
+WORKDIR /usr/src/app
+
+COPY ./app/package*.json /usr/src/app/
+
+RUN npm ci --only=production && npm cache clean --force
+
+COPY ./app /usr/src/app/
+
+EXPOSE 4000
