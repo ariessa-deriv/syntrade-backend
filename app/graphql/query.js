@@ -1,6 +1,6 @@
 const {
   GraphQLObjectType,
-  GraphQLID,
+  GraphQLInt,
   GraphQLList,
   GraphQLNonNull,
 } = require("graphql");
@@ -27,7 +27,7 @@ const query = new GraphQLObjectType({
     },
     user: {
       type: User,
-      args: { user_id: { type: GraphQLNonNull(GraphQLID) } },
+      args: { user_id: { type: GraphQLNonNull(GraphQLInt) } },
       where: (userTable, args, context) =>
         `${userTable}.user_id = ${args.user_id}`,
       resolve: (parent, args, context, resolveInfo) => {
@@ -46,7 +46,7 @@ const query = new GraphQLObjectType({
     },
     trade: {
       type: Trade,
-      args: { trade_id: { type: GraphQLNonNull(GraphQLID) } },
+      args: { trade_id: { type: GraphQLNonNull(GraphQLInt) } },
       where: (userTable, args, context) =>
         `${userTable}.trade_id = ${args.trade_id}`,
       resolve: (parent, args, context, resolveInfo) => {

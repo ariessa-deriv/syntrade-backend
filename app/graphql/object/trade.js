@@ -1,6 +1,6 @@
 const {
   GraphQLObjectType,
-  GraphQLID,
+  GraphQLInt,
   GraphQLFloat,
   GraphQLString,
 } = require("graphql");
@@ -12,8 +12,8 @@ const Trade = new GraphQLObjectType({
   name: "Trade",
   extensions: { joinMonster: { sqlTable: "trades", uniqueKey: "trade_id" } },
   fields: () => ({
-    trade_id: { type: GraphQLID },
-    user_id: { type: GraphQLID },
+    trade_id: { type: GraphQLInt },
+    user_id: { type: GraphQLInt },
     synthetic_type: { type: SyntheticEnum },
     currency: { type: scalarResolvers.Currency, defaultValue: "usd" },
     trade_time: { type: scalarResolvers.BigInt },

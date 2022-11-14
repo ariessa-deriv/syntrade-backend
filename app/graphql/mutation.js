@@ -22,7 +22,7 @@ const Mutation = new GraphQLObjectType({
     createTrade: {
       type: Trade,
       args: {
-        user_id: { type: GraphQLNonNull(GraphQLID) },
+        user_id: { type: GraphQLNonNull(GraphQLInt) },
         synthetic_type: { type: GraphQLNonNull(SyntheticEnum) },
         trade_type: { type: GraphQLNonNull(TradeEnum) },
         trade_result: {
@@ -55,7 +55,7 @@ const Mutation = new GraphQLObjectType({
     updateUser: {
       type: User,
       args: {
-        user_id: { type: GraphQLNonNull(GraphQLID) },
+        user_id: { type: GraphQLNonNull(GraphQLInt) },
         email: { type: GraphQLNonNull(scalarResolvers.EmailAddress) },
         password: { type: GraphQLNonNull(GraphQLString) },
         wallet_balance: { type: GraphQLNonNull(GraphQLFloat) },
@@ -77,7 +77,7 @@ const Mutation = new GraphQLObjectType({
     deleteUser: {
       type: User,
       args: {
-        user_id: { type: GraphQLNonNull(GraphQLID) },
+        user_id: { type: GraphQLNonNull(GraphQLInt) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         try {
