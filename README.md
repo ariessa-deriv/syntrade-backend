@@ -24,6 +24,7 @@ git clone git@github.com:ariessa-deriv/syntrade-backend.git
 Create .env file and insert values
 
 ```
+BACKEND_PORT=""
 POSTGRES_HOST=""
 POSTGRES_PORT=""
 POSTGRES_DATABASE=""
@@ -31,6 +32,9 @@ POSTGRES_USER=""
 POSTGRES_PASSWORD=""
 REDIS_PASSWORD=""
 JWT_SECRET=""
+FLASK_HOST=""
+FLASK_PORT=""
+FLASK_SECRET_KEY=""
 ```
 
 Build and start Docker containers in detached mode
