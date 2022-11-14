@@ -1,4 +1,4 @@
-const { GraphQLObjectType, GraphQLInt, GraphQLFloat } = require("graphql");
+const { GraphQLObjectType, GraphQLInt, GraphQLString, GraphQLFloat } = require("graphql");
 const { resolvers: scalarResolvers } = require("graphql-scalars");
 const joinMonster = require("join-monster");
 const Trade = require("./trade");

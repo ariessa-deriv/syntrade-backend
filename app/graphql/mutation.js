@@ -2,7 +2,7 @@ const dotenv = require("dotenv");
 const { resolvers: scalarResolvers } = require("graphql-scalars");
 const {
   GraphQLObjectType,
-  GraphQLID,
+  GraphQLInt,
   GraphQLString,
   GraphQLFloat,
   GraphQLNonNull,
