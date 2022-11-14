@@ -19,7 +19,7 @@ const Trade = new GraphQLObjectType({
     trade_time: { type: scalarResolvers.BigInt },
     trade_type: { type: TradeEnum },
     trade_result: { type: GraphQLFloat },
-    current_wallet_balance: { type: GraphQLString },
+    current_wallet_balance: { type: GraphQLFloat },
   }),
 });
 
