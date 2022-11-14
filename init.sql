@@ -4,7 +4,7 @@ CREATE DATABASE syntrade;
 -- Connect to syntrade database
 \c syntrade
 
-# Create enum type called synthetic_type
+-- Create enum type called synthetic_type
 CREATE TYPE synthetic_type AS ENUM ( 
 'boom_100_rise',
 'boom_100_fall',
