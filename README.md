@@ -129,7 +129,7 @@ Build and start Docker containers in detached mode
   ```
   # Sign up
   mutation {
-    signup(email: "randomemail@gmail.com", password: "ABC123!") {
+    signup(email: "randomemail@gmail.com", password: "Abc4123!") {
       email,
       password
     }
@@ -139,7 +139,7 @@ Build and start Docker containers in detached mode
   ```
   # Login
   mutation {
-    login(email: "randomemail@gmail.com", password: "ABC123!") {
+    login(email: "randomemail@gmail.com", password: "Abc4123!") {
       email,
       password
     }
@@ -173,7 +173,7 @@ Build and start Docker containers in detached mode
   ```
   # Create new trade
   mutation {
-    createTrade(user_id: 1, synthetic_type: "boom_100", trade_type: "buy", trade_result: -1000.80, current_wallet_balance: 9000) {
+    createTrade(user_id: 1, synthetic_type: "boom_100_rise", trade_type: "buy", trade_result: -1000.80, current_wallet_balance: 9000) {
       user_id,
       synthetic_type,
       trade_type,
