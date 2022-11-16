@@ -1,8 +1,7 @@
 flask
 numpy
-apscheduler
-flask_socketio
-gevent
-gevent-websocket
 python-dotenv
 datetime
+gunicorn
+gevent
+flask-restful
