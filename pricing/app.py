@@ -8,8 +8,10 @@ import numpy as np
 import time
 from datetime import datetime
 from flask import Flask, json, Response
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 S1 = [100000]
 S2 = [100000]
@@ -112,7 +114,9 @@ def event():
 
 @app.route('/', methods=['GET', 'POST'])
 def stream():
-    return Response(event(), mimetype="application/json")
+    response= Response(event(), mimetype="application/json")
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
 
 if __name__ == "__main__":
     WSGIServer(('', 5000), app).serve_forever()

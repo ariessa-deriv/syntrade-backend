@@ -5,3 +5,4 @@ datetime
 gunicorn
 gevent
 flask-restful
+flask_cors
