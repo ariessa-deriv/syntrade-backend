@@ -9,3 +9,6 @@ postgres/
 
 # Ignore
 redis/
+
+# Ignore __pycache__ folder
+__pycache__
