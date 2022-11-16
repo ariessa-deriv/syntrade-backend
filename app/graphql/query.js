@@ -4,6 +4,7 @@ const {
   GraphQLList,
   GraphQLNonNull,
 } = require("graphql");
+const { resolvers: scalarResolvers } = require("graphql-scalars");
 const User = require("./object/user");
 const Trade = require("./object/trade");
 const databasePool = require("../lib/database");
@@ -13,18 +14,20 @@ const query = new GraphQLObjectType({
   fields: () => ({
     // TODO: me
     me: {
-      type: User,
-      resolve: (parent, args, context, resolveInfo) => {},
+      type: scalarResolvers.JWT || null,
+      resolve: (parent, args, context, resolveInfo) => {
+        try {
+          // Check current user
+        } catch (err) {
+          throw new Error(err);
+        }
+      },
     },
     users: {
       type: new GraphQLList(User),
       resolve: async (parent, args, context, resolveInfo) => {
         try {
-          return (
-            await databasePool.query(
-              `SELECT users.*, (select row_to_json(t) from (select * from trades where trades.user_id = users.user_id) as t) as trades FROM users INNER JOIN trades ON users.user_id = trades.user_id;`
-            )
-          ).rows;
+          return (await databasePool.query(`SELECT * FROM users;`)).rows;
         } catch (err) {
           throw new Error("Failed to get all users");
         }
