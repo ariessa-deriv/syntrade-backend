@@ -9,7 +9,7 @@ const cacheClient = require("./lib/cache");
 // Load .env file contents into process.env
 dotenv.config();
 
-const sse = new EventSource(`http://0.0.0.0:5000`);
+const sse = new EventSource(`http://0.0.0.0:${FLASK_PORT}`);
 sse.onmessage = async (e) => {
   try {
     const data = JSON.parse(e.data);
@@ -102,7 +102,7 @@ var app = express();
 
 app.use(
   "/",
-  cors({ origin: "https://app.syntrade.xyz", credentials: true }),
+  cors({ origin: process.env.FLASK_PORT, credentials: true }),
   graphqlHTTP(async (req, res, graphQLParams) => ({
     schema: schema,
     graphiql: false,
