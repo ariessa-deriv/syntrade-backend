@@ -48,12 +48,19 @@ services:
     image: syntrade-pricing
     ports:
       - "5000:5000"
+    expose:
+      - "5000"
     env_file:
       - .env
     volumes:
       - "./pricing:/usr/src/pricing"
+    command: gunicorn app:app --worker-class gevent --bind 0.0.0.0:5000
 volumes:
   app:
   postgres:
   redis:
   flask:
+networks:
+  default:
+    name: syntrade-network
+    driver: bridge

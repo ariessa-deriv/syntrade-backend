@@ -3,10 +3,8 @@ FROM python:3.9
 WORKDIR /usr/src/pricing
 
 COPY ./pricing/requirements.txt ./
-COPY ./pricing/app-dev.py ./
+COPY ./pricing/app.py ./
 
 RUN pip3 install -r requirements.txt
 
 EXPOSE 5000
-
-CMD ["python3", "app-dev.py"]
