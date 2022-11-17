@@ -9,7 +9,7 @@
 
 - [Express](https://www.npmjs.com/package/express)
 - [GraphQL](https://www.npmjs.com/package/graphql)
-- [SocketIO Client](https://www.npmjs.com/package/socket.io-client)
+- [Server Sent Events](https://en.wikipedia.org/wiki/Server-sent_events)
 
 </br>
 
@@ -39,17 +39,51 @@ FLASK_SECRET_KEY=""
 
 Build and start Docker containers in detached mode
 
-- For development
+```
+docker-compose --env-file .env --file docker-compose.yml up -d
+```
+
+</br>
+
+## Troubleshooting
+
+You might not need to rebuild all containers again so use the following commands as you see fit.
+
+- **Error**\
+  docker: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Post http://%2Fvar%2Frun%2Fdocker.sock/v1.35/containers/create: dial unix /var/run/docker.sock: connect: permission denied. See 'docker run --help'.
+
+  **Solution**
 
   ```
-  docker-compose --env-file .env --file docker-compose-dev.yml up -d
+  sudo chmod 666 /var/run/docker.sock
   ```
 
-  Open [http://localhost:4000](http://localhost:4000) with your browser to use GraphiQL.
+- **Error**\
+  Port 5432 is bind to another process
 
-- For production
+  **Solution**
+
   ```
-  docker-compose --env-file .env --file docker-compose-prod.yml up -d
+  # Check which process is running on port 5432
+  sudo lsof -i :5432
+
+  # Kill the process by ID
+  sudo kill -9 <pid>
+  ```
+
+- **Misc**
+
+  ```
+  # Stop all Docker containers
+  docker kill $(docker ps -q)
+
+  # Remove all Docker containers
+  docker rm $(docker ps -a -q)
+
+  # Remove all Docker images
+  docker rmi $(docker images -q)
+
+  sudo rm -rf postgres redis app
   ```
 
 </br>
