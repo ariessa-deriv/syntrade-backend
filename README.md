@@ -37,6 +37,12 @@ FLASK_PORT=""
 FLASK_SECRET_KEY=""
 ```
 
+Install packages using npm
+
+```
+cd app && npm install
+```
+
 Build and start Docker containers in detached mode
 
 ```
@@ -58,32 +64,45 @@ You might not need to rebuild all containers again so use the following commands
   sudo chmod 666 /var/run/docker.sock
   ```
 
+  </br>
+
 - **Error**\
-  Port 5432 is bind to another process
+  ERROR: for postgres Cannot start service postgres: driver failed programming external connectivity on endpoint syntrade-database (1a20e2684584f681b8c8c84226cdf25b25b6b32c195ecd255261f43e20123cde): Error starting userland proxy: listen tcp4 0.0.0.0:5432: bind: address already in use\
+  ERROR: Encountered errors while bringing up the project.
 
   **Solution**
 
-  ```
-  # Check which process is running on port 5432
-  sudo lsof -i :5432
-
-  # Kill the process by ID
-  sudo kill -9 <pid>
-  ```
-
-- **Misc**
+  Check which process is running on port 5432 and kill the process by PID
 
   ```
-  # Stop all Docker containers
-  docker kill $(docker ps -q)
+  sudo kill -9 $(sudo lsof -i :5432 | awk 'NR==2{print $2}')
+  ```
 
-  # Remove all Docker containers
-  docker rm $(docker ps -a -q)
+  </br>
 
-  # Remove all Docker images
-  docker rmi $(docker images -q)
+- **Error**\
+  Containers with name of `syntrade-backend` or `syntrade-pricing` fails to be build or start up.
 
-  sudo rm -rf postgres redis
+  **Solution**\
+  Clean your repository by running the `clean.sh` script.
+
+  ```
+  sh clean.sh
+  ```
+
+  </br>
+
+- **Error**\
+  npm ERR! Failed at the syntrade-backend@1.0.0 dev script.
+  npm ERR! This is probably not a problem with npm. There is likely additional logging output above.
+  npm WARN Local package.json exists, but node_modules missing, did you mean to install?
+
+  **Solution**
+
+  Navigate to app folder and install packages using npm
+
+  ```
+  cd app && npm install
   ```
 
 </br>
