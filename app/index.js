@@ -11,7 +11,10 @@ var app = express();
 
 app.use(
   "/",
-  cors({ origin: process.env.FLASK_PORT, credentials: true }),
+  cors({
+    origin: process.env.FRONTEND_DEV_URL,
+    credentials: true,
+  }),
   graphqlHTTP(async (req, res, graphQLParams) => ({
     schema: schema,
     graphiql: true,
