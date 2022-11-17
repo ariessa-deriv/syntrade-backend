@@ -10,4 +10,4 @@ docker rm $(docker ps -a -q) || true
 docker rmi $(docker images -q) || true
 
 # Remove postgres and redis folders
-sudo rm -rf postgres redis
+sudo rm -rf postgres redis || true
