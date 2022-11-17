@@ -4,7 +4,7 @@ services:
     container_name: syntrade-backend
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.backend
     image: syntrade-backend
     depends_on:
       - postgres
@@ -44,7 +44,7 @@ services:
     container_name: syntrade-pricing
     build:
       context: .
-      dockerfile: Dockerfile.pricing.dev
+      dockerfile: Dockerfile.pricing
     image: syntrade-pricing
     ports:
       - "5000:5000"
