@@ -83,7 +83,7 @@ You might not need to rebuild all containers again so use the following commands
   # Remove all Docker images
   docker rmi $(docker images -q)
 
-  sudo rm -rf postgres redis app
+  sudo rm -rf postgres redis
   ```
 
 </br>
