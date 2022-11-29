@@ -31,10 +31,14 @@ POSTGRES_DATABASE=""
 POSTGRES_USER=""
 POSTGRES_PASSWORD=""
 REDIS_PASSWORD=""
+REDIS_PORT=""
+REDIS_USER=""
 JWT_SECRET=""
 FLASK_HOST=""
 FLASK_PORT=""
 FLASK_SECRET_KEY=""
+FRONTEND_DEV_URL=""
+FRONTEND_URL=""
 ```
 
 Install packages using npm
@@ -109,12 +113,16 @@ You might not need to rebuild all containers again so use the following commands
 
 ## API endpoints
 
+Example of sending GET request using cURL
+
+```
+curl --location --request GET 'http://localhost:4000' \
+--header 'Content-Type: application/json' \
+--data-raw '{"query":"{\n  users {\n    user_id\n    email\n    password\n    wallet_balance\n    date_joined\n    trades {\n      trade_id\n      user_id\n      synthetic_type\n      currency\n      trade_time\n      trade_type\n      trade_result\n      current_wallet_balance\n    }\n  }\n}","variables":{}}' | json_pp
+```
+
 ### Query
 
-- me
-  ```
-  // TODO
-  ```
 - users
   ```
   # Get all users
@@ -198,21 +206,9 @@ You might not need to rebuild all containers again so use the following commands
     }
   }
   ```
-- updateUser
+- deleteAccount
   ```
-  # Update user details
-  mutation {
-      updateUser(user_id: 2, email: "newemail@icloud.com", password: "P4ssword! ", wallet_balance: 4000) {
-          user_id,
-          email,
-          password,
-          wallet_balance
-      }
-  }
-  ```
-- deleteUser
-  ```
-  # Delete user by user_id. This will also delete user's trades
+  # Delete user account by user_id. This will also delete user's trades
   mutation {
       deleteUser(user_id: 3) {
           user_id
@@ -236,8 +232,51 @@ You might not need to rebuild all containers again so use the following commands
   }
   ```
 - forgotPassword
+
   ```
   // TODO
   ```
 
-</br>
+- changePassword (TODO)
+
+  ```
+  # Change user details
+  mutation {
+      changePassword(user_id: 2, email: "newemail@icloud.com", password: "P4ssword! ", wallet_balance: 4000) {
+          user_id,
+          email,
+          password,
+          wallet_balance
+      }
+  }
+  ```
+
+- resetPassword
+
+  ```
+  // TODO
+  ```
+
+- resetBalance
+
+  ```
+  // TODO
+  ```
+
+- getHistoricalData
+
+  ```
+  // TODO
+  ```
+
+- getStakePrices
+
+  ```
+  // TODO
+  ```
+
+- getPayoutPrices
+  ```
+  // TODO
+  ```
+  </br>
