@@ -3,6 +3,7 @@ const {
   GraphQLInt,
   GraphQLList,
   GraphQLNonNull,
+  GraphQLFloat,
 } = require("graphql");
 const { resolvers: scalarResolvers } = require("graphql-scalars");
 const User = require("./object/user");
@@ -45,6 +46,11 @@ const query = new GraphQLObjectType({
         }
       },
     },
+
+    stakePrices: {
+      type: GraphQLFloat,
+      args: { }
+    }
   }),
 });
 

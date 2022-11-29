@@ -7,6 +7,9 @@
 // Ticks: The number of ticks before the expiry of contract
 // Option Type: Either "put" or "call" --> "call" is for Up and "put" is for Down
 
+// TODO: allow ticks within 1-10 ticks only
+// TODO: allow min stake of 1.00
+// TODO: allow max payout up to 30000 only
 function factorial(n) {
   //base case
   if (n == 0 || n == 1) {
@@ -78,6 +81,8 @@ function boom100_payout(stake, ticks, option_type) {
 // // Test cases
 // boom100_payout(20, 1, "call"); // Should be 800
 // boom100_payout(20, 1, "put"); // Should not offer contract
+boom100_payout(500, 10, "call");
+boom100_payout(500, 10, "put");
 
 // boom100_winnings
 function boom100_winnings(entry_price, exit_price, stake, ticks, option_type) {
@@ -126,3 +131,5 @@ function boom100_winnings(entry_price, exit_price, stake, ticks, option_type) {
 //   (ticks = 1),
 //   (option_type = "put")
 // ); // This contract should not be offered to begin with, throw error
+
+// boom100_payout(stake, ticks, option_type);
