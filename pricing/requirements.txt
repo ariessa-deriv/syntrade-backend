@@ -1,7 +1,6 @@
 flask
 numpy
 python-dotenv
-datetime
 gunicorn
 gevent
 flask-restful

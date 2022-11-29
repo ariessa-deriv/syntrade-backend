@@ -5,7 +5,7 @@ monkey.patch_all()
 import json
 import random as random
 import numpy as np
-import time
+import pytz
 from datetime import datetime
 from flask import Flask, json, Response
 from flask_cors import CORS
@@ -22,7 +22,6 @@ S6 = [100000]
 S7 = [100000]
 S8 = [100000]
 
-tick = 0
 mu = 0
 sigma_10 = 0.1
 sigma_25 = 0.25
@@ -88,14 +87,10 @@ def event():
         curr_price_vol_25 = S8[-1] * np.exp((mu-0.5*sigma_25**2)*dt + sigma_25*dW)
         S8.append(curr_price_vol_25)
 
-        # Current Tick
-        global tick
-        tick = tick + 1
-
         # Current Time
-        # now = datetime.now()
-        # time_utc = now.strftime("%H:%M:%S")
-        time_utc = int(time.time()) 
+        now = datetime.now()
+        time_asia_kuala_lumpur = int(now.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%s"))
+
 
         pricing = json.dumps({
             'current_boom_100_price': curr_boom_100_price[-1], 
@@ -106,17 +101,16 @@ def event():
             'current_crash_500_price': curr_crash_500_price[-1], 
             'current_vol_10_price': curr_price_vol_10[-1], 
             'current_vol_25_price': curr_price_vol_25[-1],
-            'tick': tick, 
-            'time_utc': time_utc})
+            'time_asia_kuala_lumpur': time_asia_kuala_lumpur})
             
         yield 'data: ' + pricing + '\n\n'
         gevent.sleep(seconds=1)
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def stream():
     response= Response(event(), mimetype="application/json")
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response
 
 if __name__ == "__main__":
-    WSGIServer(('', 5000), app).serve_forever()
+    WSGIServer(('0.0.0.0', 5000), app).serve_forever()
