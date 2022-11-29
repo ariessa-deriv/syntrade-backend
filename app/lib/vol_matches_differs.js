@@ -1,33 +1,64 @@
-// This Javascript file contains the function to correctly output the appropriate payout for a bet in the Matches/Differs trade type.
-// Parameters:
-// Bet: Must be "matches" or "differs" --> "matches" means the client bets that the last digit will be the same as their predicted digit
-// Stake: The amount of money bet by the client
+// The matches_differs_payout requires:
+// Stake: Amount of money that the client bets
+// and returns an array [matches_payoff, differs_payoff]
+// Matches Payout: Amount of money that the client wins for a correct Matches prediction
+// Differs Payout: Amount of money that the client wins for a correct Differs prediction
 
-function match_differs_payoff(bet, stake) {
-  var payoff;
+function match_differs_payoff(stake) {
+  var differs_payoff, matches_payoff;
 
   if (stake >= 1) {
-    if (bet === "differs") {
-      payoff = (stake * 100) / 91;
-      console.log(payoff);
-      return Math.round(payoff, 2);
-    } else {
-      if (bet === "matches") {
-        payoff = (stake * 100) / 11;
-        console.log(payoff);
-        return Math.round(payoff, 2);
-      } else {
-        return "Bet must be 'matches' or 'differs'";
-      }
-    }
+    differs_payoff = (stake * 100) / 91;
+    matches_payoff = (stake * 100) / 11;
+    console.log([
+      Math.round(matches_payoff * 100, 2) / 100,
+      Math.round(differs_payoff * 100, 2) / 100,
+    ]);
+    return [
+      Math.round(matches_payoff * 100, 2) / 100,
+      Math.round(differs_payoff * 100, 2) / 100,
+    ];
   } else {
     return "Stake is too low";
   }
 }
 
-// // Problem recreation (example)
-// match_differs_payoff("differs", 100);
-// // Expected output: 109.89
+// Problem recreation (example)
+match_differs_payoff(100);
+// Expected output: 109.
+
+// The match_differs_stake requires:
+// Payout: Amount of money that the client wishes to win from a correct prediction
+// and returns an array [matches_stake, differs_stake]
+// Matches Stake: Amount of Stake that the client is required to bet to win the desired Payout for a Matches prediction
+// Differs Stake: Amount of Stake that the client is required to bet to win the desired Payout for a Differs prediction
+
+function match_differs_stake(payout) {
+  var differs_stake, matches_stake;
+  differs_stake = Math.round(payout * 91, 2) / 100;
+  matches_stake = Math.round(payout * 11, 2) / 100;
+
+  if (differs_stake >= 1 && matches_stake >= 1) {
+    console.log([matches_stake, differs_stake]);
+    return [matches_stake, differs_stake];
+  }
+
+  if (differs_stake < 1 && matches_stake >= 1) {
+    console.log([matches_stake, null]);
+    return [matches_stake, null];
+  }
+
+  if (differs_stake >= 1 && matches_stake < 1) {
+    console.log([null, differs_stake]);
+    return [null, differs_stake];
+  } else {
+    return "Stake is too low";
+  }
+}
+
+// Problem recreation (example)
+match_differs_stake(6);
+// Expected output: [null, 5.46]
 
 // This function determines if client wins or loses, and pays them accordingly
 function match_differs_winnings(bet_type, bet_digit, stake, exit_price) {
