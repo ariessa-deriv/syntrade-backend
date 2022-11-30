@@ -39,6 +39,8 @@ FLASK_PORT=""
 FLASK_SECRET_KEY=""
 FRONTEND_DEV_URL=""
 FRONTEND_URL=""
+GMAIL_USER=""
+GMAIL_PASSWORD=""
 ```
 
 Install packages using npm
