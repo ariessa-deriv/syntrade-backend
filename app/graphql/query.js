@@ -18,6 +18,7 @@ const {
   boom100_payout,
   crash100_payout,
   even_odd_payout,
+  even_odd_stake,
 } = require("../lib/pricing");
 
 const query = new GraphQLObjectType({
