@@ -125,19 +125,6 @@ curl --location --request GET 'http://localhost:4000' \
 
 ### Query
 
-- users
-  ```
-  # Get all users
-  {
-    users {
-      user_id
-      email
-      password
-      wallet_balance
-      date_joined
-    }
-  }
-  ```
 - user
 
   ```
@@ -153,22 +140,6 @@ curl --location --request GET 'http://localhost:4000' \
   }
   ```
 
-- trades
-  ```
-  # Get all trades
-  {
-    trades {
-      trade_id
-      user_id
-      synthetic_type
-      currency
-      trade_time
-      trade_type
-      trade_result
-      current_wallet_balance
-    }
-  }
-  ```
 - trade
   ```
   # Get trade by trade id
@@ -179,7 +150,7 @@ curl --location --request GET 'http://localhost:4000' \
       synthetic_type
       currency
       trade_time
-      trade_type
+      transaction_type
       trade_result
       current_wallet_balance
     }
@@ -224,10 +195,10 @@ curl --location --request GET 'http://localhost:4000' \
   ```
   # Create new trade
   mutation {
-    createTrade(user_id: 1, synthetic_type: "boom_100_rise", trade_type: "buy", trade_result: -1000.80, current_wallet_balance: 9000) {
+    createTrade(user_id: 1, synthetic_type: "boom_100_rise", transaction_type: "buy", trade_result: -1000.80, current_wallet_balance: 9000) {
       user_id,
       synthetic_type,
-      trade_type,
+      transaction_type,
       trade_result,
       current_wallet_balance,
     }
@@ -265,20 +236,4 @@ curl --location --request GET 'http://localhost:4000' \
   // TODO
   ```
 
-- getHistoricalData
-
-  ```
-  // TODO
-  ```
-
-- getStakePrices
-
-  ```
-  // TODO
-  ```
-
-- getPayoutPrices
-  ```
-  // TODO
-  ```
   </br>
