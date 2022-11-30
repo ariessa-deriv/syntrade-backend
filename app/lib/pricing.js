@@ -293,7 +293,10 @@ const even_odd_payout = (stake) => {
     comm = Math.max(0.02, stake * 0.02);
     payout = (stake - comm) * 2;
     console.log([Math.round(payout, 2), Math.round(payout, 2)]);
-    return [Math.round(payout, 2), Math.round(payout, 2)];
+    return [
+      Math.round(payout * 100, 2) / 100,
+      Math.round(payout * 100, 2) / 100,
+    ];
   } else {
     return "Stake is too low";
   }
@@ -309,15 +312,18 @@ const even_odd_stake = (payout) => {
 
   if (stake >= 1) {
     console.log("here");
-    console.log([Math.round(stake, 2), Math.round(stake, 2)]);
-    return [Math.round(stake, 2), Math.round(stake, 2)];
+    console.log([
+      Math.round(stake * 100, 2) / 100,
+      Math.round(stake * 100, 2) / 100,
+    ]);
+    return [Math.round(stake * 100, 2) / 100, Math.round(stake * 100, 2) / 100];
   } else {
     console.log("there");
     return [6969.0, 69696.0];
   }
 };
 
-// even_odd_stake(10);
+even_odd_stake(10);
 
 const even_odd_winnings = (bet, stake, exit_price) => {
   var comm, last_digit, net_stake, payoff, winnings;
