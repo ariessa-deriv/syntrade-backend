@@ -19,6 +19,9 @@ const {
   crash100_payout,
   even_odd_payout,
   even_odd_stake,
+  match_differs_payout,
+  vol_rise_fall_payout,
+  vol_rise_fall_stake,
 } = require("../lib/pricing");
 
 const query = new GraphQLObjectType({
@@ -115,12 +118,12 @@ const query = new GraphQLObjectType({
             syntheticModel == "volatility_10" &&
             tradeType == "rise_fall"
           ) {
-            return [0, 0];
+            return vol_rise_fall_payout(stake, 10, ticks);
           } else if (
             syntheticModel == "volatility_25" &&
             tradeType == "rise_fall"
           ) {
-            return [0, 0];
+            return vol_rise_fall_payout(stake, 25, ticks);
           }
         } else {
           if (syntheticModel == "boom_100" && tradeType == "rise_fall") {
@@ -154,12 +157,12 @@ const query = new GraphQLObjectType({
             syntheticModel == "volatility_10" &&
             tradeType == "rise_fall"
           ) {
-            return [0, 0];
+            return vol_rise_fall_stake(stake, 10, ticks);
           } else if (
             syntheticModel == "volatility_25" &&
             tradeType == "rise_fall"
           ) {
-            return [0, 0];
+            return vol_rise_fall_stake(stake, 25, ticks);
           }
         }
       },
