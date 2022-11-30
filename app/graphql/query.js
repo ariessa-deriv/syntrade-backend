@@ -167,6 +167,23 @@ const query = new GraphQLObjectType({
         }
       },
     },
+
+    currentBalance: {
+      type: GraphQLFloat,
+      args: { user_id: { type: GraphQLNonNull(GraphQLInt) } },
+      resolve: async (parent, args, context, resolveInfo) => {
+        try {
+          return (
+            await databasePool.query(
+              `SELECT wallet_balance FROM users WHERE users.user_id = $1;`,
+              [args.user_id]
+            )
+          ).rows[0].wallet_balance;
+        } catch (err) {
+          throw new Error("Failed to get user's wallet balance");
+        }
+      },
+    },
   }),
 });
 
