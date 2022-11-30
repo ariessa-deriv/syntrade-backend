@@ -14,8 +14,9 @@ const TradeEnum = require("./enum/trade");
 const databasePool = require("../lib/database");
 const User = require("./object/user");
 const Trade = require("./object/trade");
-const { isEmailValid, isPasswordValid } = require("../lib/helpers");
+const { isEmailValid, isPasswordValid } = require("../lib/input_validations");
 const Cookies = require("cookies");
+const transporter = require("../lib/mail");
 
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
@@ -53,25 +54,24 @@ const Mutation = new GraphQLObjectType({
         }
       },
     },
-    updateUser: {
+    // TODO: changePassword
+    changePassword: {
       type: User,
       args: {
         user_id: { type: GraphQLNonNull(GraphQLInt) },
-        email: { type: GraphQLNonNull(scalarResolvers.EmailAddress) },
         password: { type: GraphQLNonNull(GraphQLString) },
-        wallet_balance: { type: GraphQLNonNull(GraphQLFloat) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         try {
           // TODO: Get user id from JWT
           return (
             await databasePool.query(
-              "UPDATE users SET email = $2, password = $3, wallet_balance = $4 WHERE user_id = $1 RETURNING *",
-              [args.user_id, args.email, args.password, args.wallet_balance]
+              "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
+              [args.user_id, args.password]
             )
           ).rows[0];
         } catch (err) {
-          throw new Error("Failed to insert new user");
+          throw new Error("Failed to change user's password");
         }
       },
     },
@@ -186,17 +186,82 @@ const Mutation = new GraphQLObjectType({
         }
       },
     },
+    // TODO: forgotPassword
     forgotPassword: {
-      type: User,
+      type: GraphQLString,
       args: {
         email: { type: GraphQLNonNull(scalarResolvers.EmailAddress) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        // Find user by email
-        // If email exists in database, generate a random password to user
-        // Update user's password with newly generated random password
-        // Send email to user with link to password reset page (link expires in 10 mins)
-        return "TODO: forgotPassword";
+        // Normalise email address
+        const normalisedEmail = args.email.trim().toLowerCase();
+
+        var chars =
+          "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        var passwordLength = 12;
+        var password = "";
+
+        if (isEmailValid(normalisedEmail)) {
+          // Find user by email
+          const registeredUser = await databasePool.query(
+            `SELECT * FROM users WHERE email = '${normalisedEmail}';`
+          );
+
+          // If email does no exist in database, throw an error
+          if (registeredUser.rowCount < 0) {
+            throw new Error("Email does not exist in database");
+          }
+          // If email exists in database, generate a random password to user
+          else {
+            for (var i = 0; i <= passwordLength; i++) {
+              var randomNumber = Math.floor(Math.random() * chars.length);
+              password += chars.substring(randomNumber, randomNumber + 1);
+            }
+
+            // Update user's password with newly generated random password
+            await databasePool.query(
+              "UPDATE users SET password = $2 WHERE user_id = $1",
+              [args.user_id, password]
+            );
+
+            // TODO: Create password reset link for user
+            const passwordResetLink = "https://app.syntrade.xyz/reset_password";
+
+            // Send email to user with link to password reset page (link expires in 10 mins)
+            const mailOptions = {
+              from: "syntrade.team@gmail.com",
+              to: normalisedEmail,
+              subject: "Syntrade Password Reset",
+              text: "Hello there,\nYou recently requested to reset the password for your Syntrade account. Click the link below to proceed.\n\nIf you did not request a password reset, please ignore this email. This password reset link is only valid for the next 10 minutes.\n\nThanks,\nThe Syntrade team",
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+              if (error) {
+                console.log(error);
+              } else {
+                console.log("Email sent: " + info.response);
+              }
+            });
+          }
+        }
+      },
+    },
+    resetBalance: {
+      type: User,
+      args: {
+        user_id: { type: GraphQLNonNull(GraphQLInt) },
+      },
+      resolve: async (parent, args, context, resolveInfo) => {
+        try {
+          return (
+            await databasePool.query(
+              "UPDATE users SET wallet_balance = 10000 WHERE user_id = $1 RETURNING *",
+              [args.user_id]
+            )
+          ).rows[0];
+        } catch (err) {
+          throw new Error("Failed to reset user's balance");
+        }
       },
     },
   }),

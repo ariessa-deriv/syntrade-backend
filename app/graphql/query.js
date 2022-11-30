@@ -4,11 +4,21 @@ const {
   GraphQLList,
   GraphQLNonNull,
   GraphQLFloat,
+  GraphQLString,
+  GraphQLBoolean,
 } = require("graphql");
 const { resolvers: scalarResolvers } = require("graphql-scalars");
 const User = require("./object/user");
 const Trade = require("./object/trade");
 const databasePool = require("../lib/database");
+const {
+  boom100_stake,
+  crash100_stake,
+  match_differs_stake,
+  boom100_payout,
+  crash100_payout,
+  even_odd_payout,
+} = require("../lib/pricing");
 
 const query = new GraphQLObjectType({
   name: "Query",
@@ -47,10 +57,112 @@ const query = new GraphQLObjectType({
       },
     },
 
-    stakePrices: {
-      type: GraphQLFloat,
-      args: { }
-    }
+    prices: {
+      type: new GraphQLList(GraphQLFloat),
+      args: {
+        type: { type: new GraphQLNonNull(GraphQLBoolean) },
+        syntheticModel: { type: new GraphQLNonNull(GraphQLString) },
+        tradeType: { type: GraphQLNonNull(GraphQLString) },
+        stake: { type: new GraphQLNonNull(GraphQLFloat) },
+        ticks: { type: GraphQLInt },
+        numberPrediction: { type: GraphQLInt },
+      },
+      resolve: async (parent, args, context, resolveInfo) => {
+        const type = args.type;
+        const syntheticModel = args.syntheticModel;
+        const tradeType = args.tradeType;
+        const stake = args.stake;
+        const ticks = args.ticks || 0;
+        const numberPrediction = args.numberPrediction || 0;
+
+        console.log("type: ", type);
+        console.log("syntheticModel: ", syntheticModel);
+        console.log("tradeType: ", tradeType);
+        console.log("stake: ", stake);
+        console.log("ticks: ", ticks);
+        console.log("numberPrediction: ", numberPrediction);
+
+        if (!type) {
+          if (syntheticModel == "boom_100" && tradeType == "rise_fall") {
+            return boom100_payout(stake, ticks);
+          } else if (
+            syntheticModel == "crash_100" &&
+            tradeType == "rise_fall"
+          ) {
+            return crash100_payout(stake, ticks);
+          } else if (
+            syntheticModel == "volatility_10" &&
+            tradeType == "even_odd"
+          ) {
+            return even_odd_payout(stake);
+          } else if (
+            syntheticModel == "volatility_25" &&
+            tradeType == "even_odd"
+          ) {
+            return even_odd_payout(stake);
+          } else if (
+            syntheticModel == "volatility_10" &&
+            tradeType == "matches_differs"
+          ) {
+            return match_differs_payout(stake);
+          } else if (
+            syntheticModel == "volatility_25" &&
+            tradeType == "matches_differs"
+          ) {
+            return match_differs_payout(stake);
+          } else if (
+            syntheticModel == "volatility_10" &&
+            tradeType == "rise_fall"
+          ) {
+            return [0, 0];
+          } else if (
+            syntheticModel == "volatility_25" &&
+            tradeType == "rise_fall"
+          ) {
+            return [0, 0];
+          }
+        } else {
+          if (syntheticModel == "boom_100" && tradeType == "rise_fall") {
+            return boom100_stake(stake, ticks);
+          } else if (
+            syntheticModel == "crash_100" &&
+            tradeType == "rise_fall"
+          ) {
+            return crash100_stake(stake, ticks);
+          } else if (
+            syntheticModel == "volatility_10" &&
+            tradeType == "even_odd"
+          ) {
+            return even_odd_stake(stake);
+          } else if (
+            syntheticModel == "volatility_25" &&
+            tradeType == "even_odd"
+          ) {
+            return even_odd_stake(stake);
+          } else if (
+            syntheticModel == "volatility_10" &&
+            tradeType == "matches_differs"
+          ) {
+            return match_differs_stake(stake);
+          } else if (
+            syntheticModel == "volatility_25" &&
+            tradeType == "matches_differs"
+          ) {
+            return match_differs_stake(stake);
+          } else if (
+            syntheticModel == "volatility_10" &&
+            tradeType == "rise_fall"
+          ) {
+            return [0, 0];
+          } else if (
+            syntheticModel == "volatility_25" &&
+            tradeType == "rise_fall"
+          ) {
+            return [0, 0];
+          }
+        }
+      },
+    },
   }),
 });
 
