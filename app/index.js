@@ -52,7 +52,7 @@ app.use(
   }),
   graphqlHTTP(async (req, res, graphQLParams) => ({
     schema: schema,
-    graphiql: false,
+    graphiql: true,
     context: ({ req, res }) => {
       const cookies = new Cookies(req, res);
       const token = cookies.get("auth-token");
