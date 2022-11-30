@@ -5,7 +5,7 @@ const {
   GraphQLString,
 } = require("graphql");
 const SyntheticEnum = require("../enum/synthetic");
-const TradeEnum = require("../enum/trade");
+const TransactionEnum = require("../enum/transaction");
 const { resolvers: scalarResolvers } = require("graphql-scalars");
 
 const Trade = new GraphQLObjectType({
@@ -16,7 +16,7 @@ const Trade = new GraphQLObjectType({
     synthetic_type: { type: SyntheticEnum },
     currency: { type: scalarResolvers.Currency, defaultValue: "usd" },
     trade_time: { type: scalarResolvers.BigInt },
-    trade_type: { type: TradeEnum },
+    transaction_type: { type: TransactionEnum },
     trade_result: { type: GraphQLFloat },
     current_wallet_balance: { type: GraphQLFloat },
   }),

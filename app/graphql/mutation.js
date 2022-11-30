@@ -10,7 +10,7 @@ const {
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const SyntheticEnum = require("./enum/synthetic");
-const TradeEnum = require("./enum/trade");
+const TransactionEnum = require("./enum/transaction");
 const databasePool = require("../lib/database");
 const User = require("./object/user");
 const Trade = require("./object/trade");
@@ -26,7 +26,7 @@ const Mutation = new GraphQLObjectType({
       args: {
         user_id: { type: GraphQLNonNull(GraphQLInt) },
         synthetic_type: { type: GraphQLNonNull(SyntheticEnum) },
-        trade_type: { type: GraphQLNonNull(TradeEnum) },
+        transaction_type: { type: GraphQLNonNull(TransactionEnum) },
         trade_result: {
           type: GraphQLNonNull(GraphQLFloat),
         },
@@ -39,11 +39,11 @@ const Mutation = new GraphQLObjectType({
           // TODO: Get user id from JWT
           return (
             await databasePool.query(
-              "INSERT INTO trades (user_id, synthetic_type, trade_type, trade_result, current_wallet_balance) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+              "INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance) VALUES ($1, $2, $3, $4, $5) RETURNING *",
               [
                 args.user_id,
                 args.synthetic_type,
-                args.trade_type,
+                args.transaction_type,
                 args.trade_result,
                 args.current_wallet_balance,
               ]
@@ -247,7 +247,7 @@ const Mutation = new GraphQLObjectType({
       },
     },
     resetBalance: {
-      type: User,
+      type: GraphQLFloat,
       args: {
         user_id: { type: GraphQLNonNull(GraphQLInt) },
       },
@@ -255,12 +255,32 @@ const Mutation = new GraphQLObjectType({
         try {
           return (
             await databasePool.query(
-              "UPDATE users SET wallet_balance = 10000 WHERE user_id = $1 RETURNING *",
+              "UPDATE users SET wallet_balance = 10000 WHERE user_id = $1 RETURNING wallet_balance",
               [args.user_id]
             )
-          ).rows[0];
+          ).rows[0].wallet_balance;
         } catch (err) {
           throw new Error("Failed to reset user's balance");
+        }
+      },
+    },
+
+    updateBalance: {
+      type: GraphQLFloat,
+      args: {
+        user_id: { type: new GraphQLNonNull(GraphQLInt) },
+        stakePayout: { type: new GraphQLNonNull(GraphQLFloat) },
+      },
+      resolve: async (parent, args, context, resolveInfo) => {
+        try {
+          return (
+            await databasePool.query(
+              "UPDATE users SET wallet_balance = wallet_balance + $2 WHERE user_id = $1 RETURNING wallet_balance",
+              [args.user_id, args.stakePayout]
+            )
+          ).rows[0].wallet_balance;
+        } catch (err) {
+          throw new Error("Failed to update user's balance");
         }
       },
     },

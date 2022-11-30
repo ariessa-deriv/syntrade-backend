@@ -1,7 +1,7 @@
 const { GraphQLEnumType } = require("graphql");
 
-const TradeEnum = new GraphQLEnumType({
-  name: "TradeEnum",
+const TransactionEnum = new GraphQLEnumType({
+  name: "TransactionEnum",
   values: {
     buy: {
       value: "buy",
@@ -12,4 +12,4 @@ const TradeEnum = new GraphQLEnumType({
   },
 });
 
-module.exports = TradeEnum;
+module.exports = TransactionEnum;
