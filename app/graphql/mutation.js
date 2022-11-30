@@ -15,6 +15,7 @@ const databasePool = require("../lib/database");
 const User = require("./object/user");
 const Trade = require("./object/trade");
 const { isEmailValid, isPasswordValid } = require("../lib/helpers");
+const Cookies = require("cookies");
 
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
@@ -112,40 +113,16 @@ const Mutation = new GraphQLObjectType({
             `SELECT * FROM users WHERE email = '${normalisedEmail}';`
           );
 
-          console.log(registeredUser.rowCount);
-
           if (registeredUser.rowCount > 0) {
             throw new Error("Email is already registered");
           }
 
           try {
-            const user = await databasePool.query(
+            const userToSignup = await databasePool.query(
               `INSERT INTO users (email, password) VALUES ('${normalisedEmail}', '${hashedPassword}') RETURNING *;`
             );
-            console.log(user);
 
-            const token = jwt.sign(
-              {
-                id: user.user_id,
-              },
-              process.env.JWT_SECRET
-            );
-
-            console.log(
-              "JWT========================================================"
-            );
-            console.log(token);
-
-            // TODO: Store JWT as HttpCookie
-            // TODO: Return JWT token
-
-            // return user.rows[0];
-            return jwt.sign(
-              {
-                id: user.user_id,
-              },
-              process.env.JWT_SECRET
-            );
+            return userToSignup;
           } catch (err) {
             console.log(err);
             throw new Error("Error signing up for a new account");
@@ -165,55 +142,47 @@ const Mutation = new GraphQLObjectType({
 
         if (isEmailValid(normalisedEmail) && isPasswordValid(args.password)) {
           // Find user by email address
-          const user = await databasePool.query(
+          const userToLogin = await databasePool.query(
             `SELECT * FROM users WHERE email = '${normalisedEmail}'`
           );
 
-          console.log("============");
-          console.log("user here");
-          console.log(user);
-
           // if there is no user, throw an authentication error
-          if (!user) {
+          if (!userToLogin) {
             throw new Error("Error signing in");
           }
-
-          console.log("args.password");
-          console.log(args.password);
-          console.log("user.rows[0]['password']");
-          console.log(user.rows[0]["password"]);
 
           // if the passwords don't match, throw an authentication error
           const valid = await bcrypt.compare(
             args.password,
-            user.rows[0]["password"]
+            userToLogin.rows[0]["password"]
           );
           if (!valid) {
             throw new Error("Incorrect password");
           }
 
+          // Create JWT
           const token = jwt.sign(
             {
-              id: user.user_id,
+              id: userToLogin.user_id,
             },
-            process.env.JWT_SECRET
+            process.env.JWT_SECRET,
+            {
+              expiresIn: "2h",
+            }
           );
 
-          console.log(
-            "JWT========================================================"
-          );
-          console.log(token);
+          // Store JWT as HTTP Only Cookie
+          context.cookies.set("auth-token", token, {
+            httpOnly: true,
+            sameSite: "lax",
+            maxAge: 6 * 60 * 60,
+            secure: false,
+          });
 
-          // TODO: Store JWT as HttpCookie
-          // TODO: Return JWT token
+          console.log("context", context);
 
           // create and return the json web token
-          return jwt.sign(
-            {
-              id: user._id,
-            },
-            process.env.JWT_SECRET
-          );
+          return userToLogin.rows[0];
         }
       },
     },

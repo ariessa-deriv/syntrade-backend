@@ -3,6 +3,7 @@ const {
   GraphQLInt,
   GraphQLString,
   GraphQLFloat,
+  GraphQLList,
 } = require("graphql");
 const { resolvers: scalarResolvers } = require("graphql-scalars");
 const Trade = require("./trade");
@@ -16,7 +17,7 @@ const User = new GraphQLObjectType({
     wallet_balance: { type: GraphQLFloat, defaultValue: 10000.0 },
     date_joined: { type: scalarResolvers.BigInt },
     trades: {
-      type: Trade,
+      type: new GraphQLList(Trade),
     },
   }),
 });
