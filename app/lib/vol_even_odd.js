@@ -15,15 +15,15 @@ function even_odd_payout(stake) {
     comm = Math.max(0.02, stake * 0.02);
     payout = (stake - comm) * 2;
     console.log(payout);
-    console.log(Math.round(payout, 2));
-    return Math.round(payout, 2);
+    console.log(Math.round(payout * 100, 2) / 100);
+    return Math.round(payout * 100, 2) / 100;
   } else {
     return "Stake is too low";
   }
 }
 
-// //Test case
-// even_odd_payout(10); // Should return 19.6
+//Test case
+even_odd_payout(10); // Should return 19.6
 
 // The even_odd_stake requires:
 // Payout: Amount of money that the client wishes to win from a correct prediction
@@ -41,14 +41,14 @@ function even_odd_stake(payout) {
 
   if (stake >= 0.35) {
     console.log(Math.round(stake, 2));
-    return Math.round(stake, 2);
+    return Math.round(stake * 100, 2) / 100;
   } else {
     return "Stake is too low";
   }
 }
 
-// //Test case
-// even_odd_stake(19.6); // Should return 19.6
+//Test case
+even_odd_stake(19.6); // Should return 10
 
 // This function determines if the client won or lost the bet, and pays them accordingly
 function even_odd_winnings(bet, stake, exit_price) {
