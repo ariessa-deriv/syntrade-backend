@@ -77,12 +77,12 @@ def event():
         curr_crash_500_price = S6[-1] + price_move_crash_500
         S6.append(curr_crash_500_price)
 
-        # Volatility 10
+        # Volatility 10 model
         dW = np.sqrt(dt)*np.random.normal(0,1,1)
         curr_price_vol_10 = S7[-1] * np.exp((mu-0.5*sigma_10**2)*dt + sigma_10*dW)
         S7.append(curr_price_vol_10)
 
-        # Volatility 25
+        # Volatility 25 model
         dW = np.sqrt(dt)*np.random.normal(0,1,1)
         curr_price_vol_25 = S8[-1] * np.exp((mu-0.5*sigma_25**2)*dt + sigma_25*dW)
         S8.append(curr_price_vol_25)
@@ -90,7 +90,6 @@ def event():
         # Current Time
         now = datetime.now()
         time_asia_kuala_lumpur = int(now.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%s"))
-
 
         pricing = json.dumps({
             'current_boom_100_price': curr_boom_100_price[-1], 
