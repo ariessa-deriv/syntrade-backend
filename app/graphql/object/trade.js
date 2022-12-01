@@ -19,6 +19,7 @@ const Trade = new GraphQLObjectType({
     transaction_type: { type: TransactionEnum },
     trade_result: { type: GraphQLFloat },
     current_wallet_balance: { type: GraphQLFloat },
+    ticks: { type: GraphQLInt },
   }),
 });
 
