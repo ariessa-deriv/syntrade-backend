@@ -141,6 +141,7 @@ curl --location --request GET 'http://localhost:4000' \
   ```
 
 - trade
+
   ```
   # Get trade by trade id
   {
@@ -154,6 +155,25 @@ curl --location --request GET 'http://localhost:4000' \
       trade_result
       current_wallet_balance
     }
+  }
+  ```
+
+- prices
+
+  ```
+  # Get call and put prices of a synthetic model
+  {
+    prices(
+        type: true, syntheticModel: "boom_100", tradeType: "rise_fall", stake: 10.00, ticks: 5
+      )
+  }
+  ```
+
+- currentBalance
+  ```
+  # Get current wallet balance by user id
+  {
+    currentBalance(user_id: 1)
   }
   ```
 
@@ -183,57 +203,55 @@ curl --location --request GET 'http://localhost:4000' \
   ```
   # Delete user account by user_id. This will also delete user's trades
   mutation {
-      deleteUser(user_id: 3) {
-          user_id
-          email
-          wallet_balance
-          date_joined
-      }
-  }
-  ```
-- createTrade
-  ```
-  # Create new trade
-  mutation {
-    createTrade(user_id: 1, synthetic_type: "boom_100_rise", transaction_type: "buy", trade_result: -1000.80, current_wallet_balance: 9000) {
-      user_id,
-      synthetic_type,
-      transaction_type,
-      trade_result,
-      current_wallet_balance,
+    deleteUser(user_id: 3) {
+      user_id
+      email
+      wallet_balance
+      date_joined
     }
   }
   ```
-- forgotPassword
+- createTrade
 
   ```
-  // TODO
-  ```
-
-- changePassword (TODO)
-
-  ```
-  # Change user details
+  # Create new buy trade and execute sell trade when end time is reached
   mutation {
-      changePassword(user_id: 2, email: "newemail@icloud.com", password: "P4ssword! ", wallet_balance: 4000) {
-          user_id,
-          email,
-          password,
-          wallet_balance
-      }
+    createBuyTrade(user_id: 1, synthetic_type: "boom_100_rise", trade_result: 987, ticks: 7)
   }
   ```
 
-- resetPassword
+- forgotPassword
 
   ```
-  // TODO
+  # Reset user password
+  mutation {
+    forgotPassword(email: "ariessa@besquare.com.my")
+  }
+  ```
+
+- changePassword (WIP)
+
+  ```
+  # Change user's password
+  mutation {
+    changePassword(user_id: 1, password: "Abc1234!")
+  }
   ```
 
 - resetBalance
 
   ```
-  // TODO
+  # Reset wallet balance by user id
+  mutation {
+    resetBalance(user_id: 1)
+  }
   ```
 
-  </br>
+- updateBalance
+
+  ```
+  # Update wallet balance by user id
+  mutation {
+    updateBalance(user_id: 1, stakePayout: 100)
+  }
+  ```
