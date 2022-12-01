@@ -17,40 +17,67 @@ const Trade = require("./object/trade");
 const { isEmailValid, isPasswordValid } = require("../lib/input_validations");
 const Cookies = require("cookies");
 const transporter = require("../lib/mail");
+const handlebars = require("handlebars");
+const path = require("path");
+const fs = require("fs");
 
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: () => ({
-    createTrade: {
-      type: Trade,
+    createBuyTrade: {
+      type: scalarResolvers.Void,
       args: {
         user_id: { type: GraphQLNonNull(GraphQLInt) },
-        synthetic_type: { type: GraphQLNonNull(SyntheticEnum) },
-        transaction_type: { type: GraphQLNonNull(TransactionEnum) },
+        synthetic_type: { type: GraphQLNonNull(GraphQLString) },
         trade_result: {
           type: GraphQLNonNull(GraphQLFloat),
         },
-        current_wallet_balance: {
-          type: GraphQLNonNull(GraphQLFloat),
-        },
+        ticks: { type: GraphQLNonNull(GraphQLInt) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         try {
-          // TODO: Get user id from JWT
-          return (
-            await databasePool.query(
-              "INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-              [
-                args.user_id,
-                args.synthetic_type,
-                args.transaction_type,
-                args.trade_result,
-                args.current_wallet_balance,
-              ]
-            )
-          ).rows[0];
+          const transaction_type = "buy";
+          const trade_result = args.trade_result * -1;
+
+          console.log("user_id: ", args.user_id);
+          console.log("trade_result: ", trade_result);
+          console.log("syntheticType: ", args.synthetic_type);
+
+          // Calculate current wallet balance
+          const user_details = await databasePool.query(
+            `SELECT * FROM users WHERE users.user_id = $1;`,
+            [args.user_id]
+          );
+
+          console.log("user_details", user_details);
+
+          const current_wallet_balance = user_details.rows[0].wallet_balance;
+
+          const res = await databasePool.query(
+            "INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance, ticks) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+            [
+              args.user_id,
+              args.synthetic_type,
+              transaction_type,
+              trade_result,
+              current_wallet_balance,
+              args.ticks,
+            ]
+          );
+
+          // If query is successful, return 200 OK
+          if (res.rows[0]) {
+            // return 200;
+            const tradeTime = res.rows[0].trade_time;
+            const ticks = res.rows[0].ticks;
+
+            console.log("tradeTime: ", tradeTime);
+            console.log("ticks: ", ticks);
+            // Close trade after end time is reached
+            const sellTradeTime = "";
+          }
         } catch (err) {
-          throw new Error("Failed to insert new trade");
+          console.log("Failed to insert new trade");
         }
       },
     },
@@ -186,9 +213,8 @@ const Mutation = new GraphQLObjectType({
         }
       },
     },
-    // TODO: forgotPassword
     forgotPassword: {
-      type: GraphQLString,
+      type: scalarResolvers.Void,
       args: {
         email: { type: GraphQLNonNull(scalarResolvers.EmailAddress) },
       },
@@ -218,6 +244,8 @@ const Mutation = new GraphQLObjectType({
               password += chars.substring(randomNumber, randomNumber + 1);
             }
 
+            console.log("randomPassword: ", password);
+
             // Update user's password with newly generated random password
             await databasePool.query(
               "UPDATE users SET password = $2 WHERE user_id = $1",
@@ -227,12 +255,23 @@ const Mutation = new GraphQLObjectType({
             // TODO: Create password reset link for user
             const passwordResetLink = "https://app.syntrade.xyz/reset_password";
 
+            const filePath = path.join(
+              __dirname,
+              "../lib/reset_password_template.html"
+            );
+            const source = fs.readFileSync(filePath, "utf-8").toString();
+            const template = handlebars.compile(source);
+            const replacements = {
+              resetLink: passwordResetLink,
+            };
+            const htmlToSend = template(replacements);
+
             // Send email to user with link to password reset page (link expires in 10 mins)
             const mailOptions = {
-              from: "syntrade.team@gmail.com",
+              from: process.env.GMAIL_USER,
               to: normalisedEmail,
               subject: "Syntrade Password Reset",
-              text: "Hello there,\nYou recently requested to reset the password for your Syntrade account. Click the link below to proceed.\n\nIf you did not request a password reset, please ignore this email. This password reset link is only valid for the next 10 minutes.\n\nThanks,\nThe Syntrade team",
+              html: htmlToSend,
             };
 
             transporter.sendMail(mailOptions, function (error, info) {
@@ -272,6 +311,8 @@ const Mutation = new GraphQLObjectType({
         stakePayout: { type: new GraphQLNonNull(GraphQLFloat) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
+        console.log("user id: ", args.user_id);
+        console.log("stake payout: ", args.stakePayout);
         try {
           return (
             await databasePool.query(
