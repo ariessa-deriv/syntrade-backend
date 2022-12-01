@@ -46,7 +46,7 @@ GMAIL_PASSWORD=""
 Install packages using npm
 
 ```
-cd app && npm install
+cd app && npm install && cd ..
 ```
 
 Build and start Docker containers in detached mode
