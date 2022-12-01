@@ -145,22 +145,29 @@ const boom100_winnings = (
 
   if (option_type === "call") {
     if (exit_price > entry_price) {
-      winnings = boom100_payout(stake, ticks, option_type);
-    } else {
-      winnings = 0;
-    }
-  } else if (option_type === "put") {
-    if (exit_price < entry_price) {
-      winnings = boom100_payout(stake, ticks, option_type);
+      winnings = boom100_payout(stake, ticks)[0];
     } else {
       winnings = 0;
     }
   } else {
-    throw new NotImplementedError("Supported option types: 'call', 'put'");
+    if (option_type === "put") {
+      if (exit_price < entry_price) {
+        winnings = boom100_payout(stake, ticks)[1];
+      } else {
+        winnings = 0;
+      }
+    } else {
+      throw new NotImplementedError("Supported option types: 'call', 'put'");
+    }
   }
   // console.log(winnings);
   return winnings;
 };
+
+// boom100_winnings(900, 910, 10, 5, "call");
+// boom100_winnings(900, 910, 10, 5, "put");
+// boom100_winnings(900, 890, 10, 5, "call");
+// boom100_winnings(900, 890, 10, 5, "put");
 
 const crash100_payout = (stake, ticks) => {
   var S,
@@ -288,7 +295,40 @@ const crash100_stake = (payout, ticks) => {
   }
 };
 
-const crash100_winnings = () => {};
+const crash100_winnings = (
+  entry_price,
+  exit_price,
+  stake,
+  ticks,
+  option_type
+) => {
+  var winnings;
+
+  if (option_type === "call") {
+    if (exit_price > entry_price) {
+      winnings = crash100_payout(stake, ticks)[0];
+    } else {
+      winnings = 0;
+    }
+  } else {
+    if (option_type === "put") {
+      if (exit_price < entry_price) {
+        winnings = crash100_payout(stake, ticks)[1];
+      } else {
+        winnings = 0;
+      }
+    } else {
+      throw new NotImplementedError("Supported option types: 'call', 'put'");
+    }
+  }
+  // console.log(winnings);
+  return winnings;
+};
+
+// crash100_winnings(900, 910, 10, 5, "call");
+// crash100_winnings(900, 910, 10, 5, "put");
+// crash100_winnings(900, 890, 10, 5, "call");
+// crash100_winnings(900, 890, 10, 5, "put");
 
 const even_odd_payout = (stake) => {
   var comm, payout;
@@ -328,7 +368,7 @@ const even_odd_stake = (payout) => {
 };
 
 const even_odd_winnings = (bet, stake, exit_price) => {
-  var comm, last_digit, net_stake, payoff, winnings;
+  var comm, last_digit, net_stake, winnings;
   last_digit = Number.parseInt(exit_price.toString().slice(-1)[0]);
   comm = Math.max(0.02, stake * 0.02);
   net_stake = stake - comm;
@@ -337,7 +377,7 @@ const even_odd_winnings = (bet, stake, exit_price) => {
     if (Number.parseInt(last_digit % 2) === 0) {
       winnings = 2 * net_stake;
     } else {
-      payoff = 0;
+      winnings = 0;
     }
   }
 
@@ -348,9 +388,14 @@ const even_odd_winnings = (bet, stake, exit_price) => {
       winnings = 0;
     }
   }
-  // console.log(winnings);
-  return [winnings, exit_price];
+  console.log(winnings);
+  return [winnings];
 };
+
+// even_odd_winnings("even", 10, 397.1);
+// even_odd_winnings("odd", 10, 397.1);
+// even_odd_winnings("even", 10, 397.33);
+// even_odd_winnings("odd", 10, 397.33);
 
 const match_differs_payout = (stake) => {
   var differs_payoff, matches_payoff;
@@ -539,6 +584,46 @@ const vol_rise_fall_stake = (payout, vol, ticks) => {
   }
 };
 
+const vol_rise_fall_winnings = (
+  entry_price,
+  exit_price,
+  stake,
+  ticks,
+  vol,
+  option_type
+) => {
+  var winnings;
+
+  if (option_type === "call") {
+    if (exit_price > entry_price) {
+      winnings = vol_rise_fall_payout(stake, vol, ticks)[0];
+    } else {
+      winnings = 0;
+    }
+  } else {
+    if (option_type === "put") {
+      if (exit_price < entry_price) {
+        winnings = vol_rise_fall_payout(stake, vol, ticks)[1];
+      } else {
+        winnings = 0;
+      }
+    } else {
+      throw new NotImplementedError("Supported option types: 'call', 'put'");
+    }
+  }
+  console.log(winnings);
+  return winnings;
+};
+
+// vol_rise_fall_winnings(900, 910, 10, 5, 10, "call");
+// vol_rise_fall_winnings(900, 910, 10, 5, 10, "put");
+// vol_rise_fall_winnings(900, 890, 10, 5, 10, "call");
+// vol_rise_fall_winnings(900, 890, 10, 5, 10, "put");
+// vol_rise_fall_winnings(900, 910, 10, 5, 25, "call");
+// vol_rise_fall_winnings(900, 910, 10, 5, 25, "put");
+// vol_rise_fall_winnings(900, 890, 10, 5, 25, "call");
+// vol_rise_fall_winnings(900, 890, 10, 5, 25, "put");
+
 module.exports = {
   boom100_payout,
   boom100_stake,
@@ -555,4 +640,5 @@ module.exports = {
   bs_binary_option,
   vol_rise_fall_payout,
   vol_rise_fall_stake,
+  vol_rise_fall_winnings,
 };

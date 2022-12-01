@@ -92,17 +92,18 @@ def event():
         time_asia_kuala_lumpur = int(now.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%s"))
 
         pricing = json.dumps({
-            'current_boom_100_price': curr_boom_100_price[-1], 
-            'current_boom_300_price': curr_boom_300_price[-1],
-            'current_boom_500_price': curr_boom_500_price[-1],
-            'current_crash_100_price': curr_crash_100_price[-1],
-            'current_crash_300_price': curr_crash_300_price[-1], 
-            'current_crash_500_price': curr_crash_500_price[-1], 
-            'current_vol_10_price': curr_price_vol_10[-1], 
-            'current_vol_25_price': curr_price_vol_25[-1],
+            'current_boom_100_price': round(curr_boom_100_price[-1],2), 
+            'current_boom_300_price': round(curr_boom_300_price[-1],2),
+            'current_boom_500_price': round(curr_boom_500_price[-1],2),
+            'current_crash_100_price': round(curr_crash_100_price[-1],2),
+            'current_crash_300_price': round(curr_crash_300_price[-1],2), 
+            'current_crash_500_price': round(curr_crash_500_price[-1],2), 
+            'current_vol_10_price': round(curr_price_vol_10[-1],2), 
+            'current_vol_25_price': round(curr_price_vol_25[-1],2),
             'time_asia_kuala_lumpur': time_asia_kuala_lumpur})
             
         yield 'data: ' + pricing + '\n\n'
+        print(pricing)
         gevent.sleep(seconds=1)
 
 @app.route('/', methods=['GET'])
