@@ -57,20 +57,21 @@ const boom100_payout = (stake, ticks) => {
   put_payout = put_num_contracts;
 
   if (put_payout > stake && call_payout > stake) {
-    console.log([call_payout, put_payout]);
+    // console.log([call_payout, put_payout]);
     return [call_payout, put_payout];
   }
 
   if (put_payout > stake && call_payout <= stake) {
-    console.log([null, put_payout]);
+    // console.log([null, put_payout]);
     return [null, put_payout];
   }
 
   if (put_payout <= stake && call_payout > stake) {
-    console.log([call_payout, null]);
+    // console.log([call_payout, null]);
     return [call_payout, null];
   } else {
-    console.log("Contract is not offered");
+    // console.log("Contract is not offered");
+    return [null, null];
   }
 };
 
@@ -115,21 +116,21 @@ const boom100_stake = (payout, ticks) => {
   put_stake = payout * (put_prob + comm);
 
   if (payout > call_stake && payout > put_stake) {
-    console.log([call_stake, put_stake]);
+    // console.log([call_stake, put_stake]);
     return [call_stake, put_stake];
   }
 
   if (payout > call_stake && payout <= put_stake) {
-    console.log([call_stake, null]);
+    // console.log([call_stake, null]);
     return [call_stake, null];
   }
 
   if (payout <= call_stake && payout > put_stake) {
-    console.log([null, put_stake]);
+    // console.log([null, put_stake]);
     return [null, put_stake];
   } else {
-    console.log("Contract is not offered");
-    return null;
+    // console.log("Contract is not offered");
+    return [null, null];
   }
 };
 
@@ -157,7 +158,7 @@ const boom100_winnings = (
   } else {
     throw new NotImplementedError("Supported option types: 'call', 'put'");
   }
-  console.log(winnings);
+  // console.log(winnings);
   return winnings;
 };
 
@@ -210,20 +211,21 @@ const crash100_payout = (stake, ticks) => {
   put_payout = put_num_contracts;
 
   if (put_payout > stake && call_payout > stake) {
-    console.log([call_payout, put_payout]);
+    // console.log([call_payout, put_payout]);
     return [call_payout, put_payout];
   }
 
   if (put_payout > stake && call_payout <= stake) {
-    console.log([null, put_payout]);
+    // console.log([null, put_payout]);
     return [null, put_payout];
   }
 
   if (put_payout <= stake && call_payout > stake) {
-    console.log([call_payout, null]);
+    // console.log([call_payout, null]);
     return [call_payout, null];
   } else {
-    console.log("Contract is not offered");
+    // console.log("Contract is not offered");
+    return [null, null];
   }
 };
 
@@ -268,21 +270,21 @@ const crash100_stake = (payout, ticks) => {
   put_stake = payout * (put_prob + comm);
 
   if (payout > call_stake && payout > put_stake) {
-    console.log([call_stake, put_stake]);
+    // console.log([call_stake, put_stake]);
     return [call_stake, put_stake];
   }
 
   if (payout > call_stake && payout <= put_stake) {
-    console.log([call_stake, null]);
+    // console.log([call_stake, null]);
     return [call_stake, null];
   }
 
   if (payout <= call_stake && payout > put_stake) {
-    console.log([null, put_stake]);
+    // console.log([null, put_stake]);
     return [null, put_stake];
   } else {
-    console.log("Contract is not offered");
-    return null;
+    // console.log("Contract is not offered");
+    return [null, null];
   }
 };
 
@@ -294,13 +296,14 @@ const even_odd_payout = (stake) => {
   if (stake >= 1.0) {
     comm = Math.max(0.02, stake * 0.02);
     payout = (stake - comm) * 2;
-    console.log([Math.round(payout, 2), Math.round(payout, 2)]);
+    // console.log([Math.round(payout, 2), Math.round(payout, 2)]);
     return [
       Math.round(payout * 100, 2) / 100,
       Math.round(payout * 100, 2) / 100,
     ];
   } else {
-    return "Stake is too low";
+    // console.log("Stake is too low");
+    return [null, null];
   }
 };
 
@@ -313,15 +316,14 @@ const even_odd_stake = (payout) => {
   stake = Math.max(fixed_stake, percentage_stake);
 
   if (stake >= 1) {
-    console.log("here");
-    console.log([
-      Math.round(stake * 100, 2) / 100,
-      Math.round(stake * 100, 2) / 100,
-    ]);
+    // console.log([
+    //   Math.round(stake * 100, 2) / 100,
+    //   Math.round(stake * 100, 2) / 100,
+    // ]);
     return [Math.round(stake * 100, 2) / 100, Math.round(stake * 100, 2) / 100];
   } else {
-    console.log("there");
-    return [6969.0, 69696.0];
+    // console.log("there");
+    return [null, null];
   }
 };
 
@@ -346,7 +348,7 @@ const even_odd_winnings = (bet, stake, exit_price) => {
       winnings = 0;
     }
   }
-  console.log(winnings);
+  // console.log(winnings);
   return [winnings, exit_price];
 };
 
@@ -356,16 +358,17 @@ const match_differs_payout = (stake) => {
   if (stake >= 1) {
     differs_payoff = (stake * 100) / 91;
     matches_payoff = (stake * 100) / 11;
-    console.log([
-      Math.round(matches_payoff * 100, 2) / 100,
-      Math.round(differs_payoff * 100, 2) / 100,
-    ]);
+    // console.log([
+    //   Math.round(matches_payoff * 100, 2) / 100,
+    //   Math.round(differs_payoff * 100, 2) / 100,
+    // ]);
     return [
       Math.round(matches_payoff * 100, 2) / 100,
       Math.round(differs_payoff * 100, 2) / 100,
     ];
   } else {
-    return "Stake is too low";
+    // console.log("Stake is too low");
+    return [null, null];
   }
 };
 
@@ -375,20 +378,21 @@ const match_differs_stake = (payout) => {
   matches_stake = Math.round(payout * 11, 2) / 100;
 
   if (differs_stake >= 1 && matches_stake >= 1) {
-    console.log([matches_stake, differs_stake]);
+    // console.log([matches_stake, differs_stake]);
     return [matches_stake, differs_stake];
   }
 
   if (differs_stake < 1 && matches_stake >= 1) {
-    console.log([matches_stake, null]);
+    // console.log([matches_stake, null]);
     return [matches_stake, null];
   }
 
   if (differs_stake >= 1 && matches_stake < 1) {
-    console.log([null, differs_stake]);
+    // console.log([null, differs_stake]);
     return [null, differs_stake];
   } else {
-    return "Stake is too low";
+    // console.log("Stake is too low");
+    return [null, null];
   }
 };
 
@@ -400,22 +404,22 @@ const match_differs_winnings = (bet_type, bet_digit, stake, exit_price) => {
     if (bet_type === "differs") {
       if (last_digit !== bet_digit) {
         winnings = (stake * 100) / 91;
-        console.log(winnings);
+        // console.log(winnings);
         return winnings;
       } else {
         winnings = 0;
-        console.log(winnings);
+        // console.log(winnings);
         return winnings;
       }
     } else {
       if (bet_type === "matches") {
         if (last_digit === bet_digit) {
           winnings = (stake * 100) / 11;
-          console.log(winnings);
+          // console.log(winnings);
           return winnings;
         } else {
           winnings = 0;
-          console.log(winnings);
+          // console.log(winnings);
           return winnings;
         }
       } else {
@@ -484,7 +488,7 @@ const vol_rise_fall_payout = (stake, vol, ticks) => {
       ) + comm;
     fall_num_contracts = stake / fall_contract_unit_price;
     fall_payout = 1 * fall_num_contracts;
-    console.log([rise_payout, fall_payout]);
+    // console.log([rise_payout, fall_payout]);
     return [rise_payout, fall_payout];
   } else {
     throw new NotImplementedError("Stake needs to be greater or equal to 1");
@@ -520,7 +524,7 @@ const vol_rise_fall_stake = (payout, vol, ticks) => {
     payout;
 
   if (rise_stake >= 1 && fall_stake >= 1) {
-    console.log([rise_stake, fall_stake]);
+    // console.log([rise_stake, fall_stake]);
     return [rise_stake, fall_stake];
   }
 
