@@ -27,6 +27,7 @@
     "graphql": "^15.8.0",
     "graphql-redis-subscriptions": "^2.5.0",
     "graphql-scalars": "^1.20.0",
+    "handlebars": "^4.7.7",
     "ioredis": "^5.2.4",
     "jsonwebtoken": "^8.5.1",
     "mathjs": "^11.4.0",
