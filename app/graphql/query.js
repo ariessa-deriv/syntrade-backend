@@ -79,13 +79,6 @@ const query = new GraphQLObjectType({
         const ticks = args.ticks || 0;
         const numberPrediction = args.numberPrediction || 0;
 
-        console.log("type: ", type);
-        console.log("syntheticModel: ", syntheticModel);
-        console.log("tradeType: ", tradeType);
-        console.log("stake: ", stake);
-        console.log("ticks: ", ticks);
-        console.log("numberPrediction: ", numberPrediction);
-
         if (!type) {
           if (syntheticModel == "boom_100" && tradeType == "rise_fall") {
             return boom100_payout(stake, ticks);
