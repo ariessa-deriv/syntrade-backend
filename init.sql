@@ -14,10 +14,14 @@ CREATE TYPE synthetic_type AS ENUM (
 'volatility_10_odd',
 'volatility_10_matches',
 'volatility_10_differs',
+'volatility_10_rise',
+'volatility_10_fall',
 'volatility_25_even',
 'volatility_25_odd',
 'volatility_25_matches',
-'volatility_25_differs'
+'volatility_25_differs',
+'volatility_25_rise',
+'volatility_25_fall'
 );
 
 -- Create enum type called transaction_type
@@ -41,6 +45,8 @@ trade_time BIGINT NOT NULL DEFAULT extract(epoch from now()),
 transaction_type transaction_type NOT NULL,
 trade_result FLOAT NOT NULL,
 current_wallet_balance FLOAT NOT NULL,
+ticks INT NOT NULL CONSTRAINT within_range
+  CHECK ("ticks" <@ int4range(1,11)),
 FOREIGN KEY (user_id)
 REFERENCES users (user_id) ON DELETE CASCADE
 );
@@ -57,17 +63,17 @@ VALUES
 RETURNING *;
 
 -- Add new buy trades into table trades
-INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance) 
+INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance, ticks) 
 VALUES 
-(1, 'boom_100_rise', 'buy', -1000.87, 9000),
-(2, 'volatility_10_even', 'buy', -2000.99, 8888),
-(3, 'crash_100_fall', 'buy', -2345.00, 8000)
+(1, 'boom_100_rise', 'buy', -1000.87, 9000, 5),
+(2, 'volatility_10_even', 'buy', -2000.99, 8888, 2),
+(3, 'crash_100_fall', 'buy', -2345.00, 8000, 4)
 RETURNING *;
 
 -- Add new sell trades into table trades
-INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance) 
+INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance, ticks) 
 VALUES 
-(1, 'boom_100_rise', 'sell', +1000.87, 9000),
-(2, 'volatility_10_even', 'sell', +2000.99, 8888),
-(3, 'crash_100_fall', 'sell', +2345.00, 8000)
+(1, 'boom_100_rise', 'sell', +1000.87, 9000, 5),
+(2, 'volatility_10_even', 'sell', +2000.99, 8888, 2),
+(3, 'crash_100_fall', 'sell', +2345.00, 8000, 4)
 RETURNING *;
