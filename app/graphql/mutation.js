@@ -74,16 +74,38 @@ const Mutation = new GraphQLObjectType({
             console.log("tradeTime: ", tradeTime);
             console.log("ticks: ", ticks);
             // Close trade after end time is reached
-            const sellTradeTime = "";
+            const sellTradeTime = tradeTime + ticks;
+
+            // Create sell trade
+            await databasePool.query(
+              "INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance, ticks) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+              [
+                args.user_id,
+                args.synthetic_type,
+                transaction_type,
+                trade_result,
+                current_wallet_balance,
+                args.ticks,
+              ]
+            );
+
+            // If type is stake, then take the money input as stake
+            // Else if type is payout, then take the pricing above the blue/red buttons as stake
+            boom100_winnings(
+              entry_price, // current price when user clicks on button
+              exit_price, // entry price + ticks
+              trade_result, // stake
+              ticks,
+              option_type // blue (call) or red (put)
+            );
           }
         } catch (err) {
           console.log("Failed to insert new trade");
         }
       },
     },
-    // TODO: changePassword
     changePassword: {
-      type: User,
+      type: scalarResolvers.Void,
       args: {
         user_id: { type: GraphQLNonNull(GraphQLInt) },
         password: { type: GraphQLNonNull(GraphQLString) },
@@ -91,12 +113,16 @@ const Mutation = new GraphQLObjectType({
       resolve: async (parent, args, context, resolveInfo) => {
         try {
           // TODO: Get user id from JWT
-          return (
-            await databasePool.query(
-              "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
-              [args.user_id, args.password]
-            )
-          ).rows[0];
+          await databasePool.query(
+            "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
+            [args.user_id, args.password]
+          );
+          // return (
+          //   await databasePool.query(
+          //     "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
+          //     [args.user_id, args.password]
+          //   )
+          // ).rows[0];
         } catch (err) {
           throw new Error("Failed to change user's password");
         }
