@@ -20,10 +20,7 @@ const transporter = require("../lib/mail");
 const handlebars = require("handlebars");
 const path = require("path");
 const fs = require("fs");
-const {
-  convertTimezone,
-  findTransactionByTime,
-} = require("../lib/utilities");
+const { convertTimezone, findTransactionByTime } = require("../lib/utilities");
 const cacheClient = require("../lib/cache");
 const {
   boom100_winnings,
@@ -36,7 +33,7 @@ const {
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: () => ({
-    createBuyTrade: {
+    createTrade: {
       type: GraphQLInt, // return 200 for OK and 400 for other errors
       args: {
         user_id: { type: GraphQLNonNull(GraphQLInt) },
