@@ -385,6 +385,14 @@ const Mutation = new GraphQLObjectType({
         const isNewPasswordValid = isNewPasswordValid(newPassword);
         const doesPasswordsMatch = currentPassword === newPassword;
 
+        console.log("userId: ", userId);
+        console.log("isUserIdValid: ", isUserIdValid);
+        console.log("currentPassword: ", currentPassword);
+        console.log("isCurrentPasswordValid: ", isCurrentPasswordValid);
+        console.log("newPassword: ", newPassword);
+        console.log("isNewPasswordValid: ", isNewPasswordValid);
+        console.log("doesPasswordsMatch: ", doesPasswordsMatch);
+
         if (
           isUserIdValid &&
           isCurrentPasswordValid &&
@@ -397,13 +405,39 @@ const Mutation = new GraphQLObjectType({
             // Check if both oldPassword and newPassword is the same or not
             // Check if old password matches the password in database
             // If old password is a match, change password
-            const changePassword = await databasePool.query(
-              "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
-              [args.userId, args.newPassword]
+
+            const currentPasswordInDatabase = await databasePool.query(
+              "SELECT password from users WHERE users.user_id = $1;",
+              [args.userId]
             );
 
-            if (changePassword.rows.length == 1) {
-              return 200;
+            if (currentPasswordInDatabase.rows.length == 1) {
+              const doesCurrentPasswordsMatch =
+                currentPasswordInDatabase.rows[0].password === currentPassword;
+
+              console.log(
+                "doesCurrentPasswordMatch: ",
+                doesCurrentPasswordsMatch
+              );
+
+              if (doesCurrentPasswordsMatch) {
+                const changePassword = await databasePool.query(
+                  "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
+                  [args.userId, args.newPassword]
+                );
+
+                console.log("changePassword: ", changePassword);
+
+                if (changePassword.rows.length == 1) {
+                  return 200;
+                }
+              } else {
+                console.log("Incorrect current password");
+                return 400;
+              }
+            } else {
+              console.log("User does not exist");
+              return 400;
             }
           } catch (err) {
             console.log("Error: ", err);
