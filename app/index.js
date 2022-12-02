@@ -15,9 +15,7 @@ sse.onmessage = async (e) => {
   try {
     const data = JSON.parse(e.data);
 
-    // console.log("data: ", data);
-
-    // Store the prices
+    // Store the prices inside a list and trim the list to 60 entries only
     await cacheClient
       .multi()
       .lpush(
@@ -30,8 +28,6 @@ sse.onmessage = async (e) => {
           time: data.time_asia_kuala_lumpur,
         })
       )
-
-      // Trim the prices list to 60 entries only
       .ltrim("historical_prices", 0, 59)
       .exec();
   } catch (error) {
