@@ -26,7 +26,7 @@ const {
   boom100_winnings,
   crash100_winnings,
   even_odd_winnings,
-  match_differs_winnings,
+  matches_differs_winnings,
   vol_rise_fall_winnings,
 } = require("../lib/pricing");
 
@@ -125,7 +125,9 @@ const Mutation = new GraphQLObjectType({
           isWagerAmountValid &&
           isTicksValid
         ) {
-          console.log("synthetic_type, wager_amount and ticks are valid");
+          console.log(
+            "synthetic_type, option_type, wager_amount and ticks are valid"
+          );
 
           try {
             // Get user's current wallet balance
@@ -185,166 +187,163 @@ const Mutation = new GraphQLObjectType({
               );
 
               if (isUpdatedWalletBalanceValid) {
-              }
-
-              // Execute function for a maximum of 3 retries
-              for (var i = 0; i < 3; i++) {
-                console.log("transaction.length: ", transaction.length);
-                console.log("transaction.length: ", transaction.length);
-                if (transaction.length == 0) {
-                  console.log("i: ", i);
-                  transaction = await findTransactionByTime(
-                    transaction_time_asia_kuala_lumpur
-                  );
-                  console.log("transaction: ", transaction);
-                }
-              }
-
-              // console.log("transaction: ", transaction);
-
-              entry_price = JSON.parse(transaction[0])[cleanedSyntheticModel];
-
-              console.log("entry_price: ", entry_price);
-
-              // Insert buy trade inside database
-              const insertBuyTrade = await databasePool.query(
-                "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
-                [
-                  user_id,
-                  synthetic_type,
-                  transaction_time_asia_kuala_lumpur,
-                  buy_transaction,
-                  wager_amount,
-                  updated_wallet_balance,
-                  ticks,
-                  entry_price,
-                ]
-              );
-
-              console.log("insertBuyTrade: ", insertBuyTrade.rows[0]);
-
-              // Notify frontend to display buy trade success snackbar
-
-              // Get entry price from transaction time in redis list
-              // let list_key =
-              //   "historical_" +
-              //   synthetic_type.substr(0, synthetic_type.lastIndexOf("_"));
-
-              // console.log("list: ", list_key);
-
-              const buyTradeEndTime =
-                parseInt(insertBuyTrade.rows[0].ticks) +
-                parseInt(insertBuyTrade.rows[0].transaction_time);
-
-              console.log(
-                "insertBuyTrade.rows[0].ticks: ",
-                insertBuyTrade.rows[0].ticks
-              );
-
-              console.log(
-                "insertBuyTrade.rows[0].trade_time: ",
-                insertBuyTrade.rows[0].transaction_time
-              );
-
-              console.log("buyTradeEndTime: ", buyTradeEndTime);
-
-              // After buy trade end time is passed, calculate user's winnings
-              setTimeout(async () => {
-                // Execute function for a maximum of three retries
+                // Execute function for a maximum of 3 retries
                 for (var i = 0; i < 3; i++) {
-                  console.log(
-                    "buyTradeTransaction.length: ",
-                    buyTradeTransaction.length
-                  );
-                  if (buyTradeTransaction.length == 0) {
+                  console.log("transaction.length: ", transaction.length);
+                  console.log("transaction.length: ", transaction.length);
+                  if (transaction.length == 0) {
                     console.log("i: ", i);
-                    buyTradeTransaction = await findTransactionByTime(
-                      buyTradeEndTime
+                    transaction = await findTransactionByTime(
+                      transaction_time_asia_kuala_lumpur
                     );
-                    console.log("buyTradeTransaction: ", buyTradeTransaction);
+                    console.log("transaction: ", transaction);
                   }
                 }
 
-                // console.log("buyTradeTransaction: ", buyTradeTransaction);
+                entry_price = JSON.parse(transaction[0])[cleanedSyntheticModel];
 
-                exit_price = JSON.parse(buyTradeTransaction[0])[
-                  cleanedSyntheticModel
-                ];
+                console.log("entry_price: ", entry_price);
 
-                console.log("exit_price: ", exit_price);
-
-                if (cleanedSyntheticModel == "boom_100") {
-                  winnings = boom100_winnings(
-                    entry_price,
-                    exit_price,
-                    wager_amount,
-                    ticks,
-                    option_type
-                  );
-                  console.log("boom_100 winnings: ", winnings);
-                } else if (cleanedSyntheticModel == "crash_100") {
-                  winnings = crash100_winnings(
-                    entry_price,
-                    exit_price,
-                    wager_amount,
-                    ticks,
-                    option_type
-                  );
-                  console.log("crash_100 winnings: ", winnings);
-                } else if (synthetic_type.includes("even_odd")) {
-                  winnings = even_odd_winnings(
-                    option_type,
-                    wager_amount,
-                    exit_price
-                  );
-                  console.log("even_odd winnings: ", winnings);
-                } else if (synthetic_type.includes("matches_differs")) {
-                  winnings = matches_differs_winnings(
-                    option_type,
-                    last_digit_prediction,
-                    wager_amount,
-                    exit_price
-                  );
-                  console.log("matches_differs winnings: ", winnings);
-                } else {
-                  const volatilityType = synthetic_type.includes(
-                    "volatility_10"
-                  )
-                    ? 10
-                    : 25;
-
-                  console.log("volatilityType: ", volatilityType);
-
-                  winnings = vol_rise_fall_winnings(
-                    entry_price,
-                    exit_price,
-                    wager_amount,
-                    ticks,
-                    volatilityType,
-                    option_type
-                  );
-                  console.log("volatility_rise_fall winnings: ", winnings);
-                }
-
-                // Insert sell trade inside database
-                const insertSellTrade = await databasePool.query(
+                // Insert buy trade inside database
+                const insertBuyTrade = await databasePool.query(
                   "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
                   [
                     user_id,
                     synthetic_type,
                     transaction_time_asia_kuala_lumpur,
-                    sell_transaction,
-                    parseFloat(winnings.toFixed(2)),
+                    buy_transaction,
+                    wager_amount,
                     updated_wallet_balance,
                     ticks,
-                    exit_price,
+                    entry_price,
                   ]
                 );
 
-                console.log("insertSellTrade: ", insertSellTrade.rows[0]);
-                // Notify frontend to display user's winnings or losses
-                return 200;
-              }, ticks * 1500);
+                console.log("insertBuyTrade: ", insertBuyTrade.rows[0]);
+
+                const buyTradeEndTime =
+                  parseInt(insertBuyTrade.rows[0].ticks) +
+                  parseInt(insertBuyTrade.rows[0].transaction_time);
+
+                console.log(
+                  "insertBuyTrade.rows[0].ticks: ",
+                  insertBuyTrade.rows[0].ticks
+                );
+
+                console.log(
+                  "insertBuyTrade.rows[0].trade_time: ",
+                  insertBuyTrade.rows[0].transaction_time
+                );
+
+                console.log("buyTradeEndTime: ", buyTradeEndTime);
+
+                // After buy trade end time is passed, calculate user's winnings
+                setTimeout(async () => {
+                  // Execute function for a maximum of three retries
+                  for (var i = 0; i < 3; i++) {
+                    console.log(
+                      "buyTradeTransaction.length: ",
+                      buyTradeTransaction.length
+                    );
+                    if (buyTradeTransaction.length == 0) {
+                      console.log("i: ", i);
+                      buyTradeTransaction = await findTransactionByTime(
+                        buyTradeEndTime
+                      );
+                      console.log("buyTradeTransaction: ", buyTradeTransaction);
+                    }
+                  }
+
+                  // console.log("buyTradeTransaction: ", buyTradeTransaction);
+
+                  exit_price = JSON.parse(buyTradeTransaction[0])[
+                    cleanedSyntheticModel
+                  ];
+
+                  console.log("exit_price: ", exit_price);
+
+                  if (cleanedSyntheticModel == "boom_100") {
+                    winnings = boom100_winnings(
+                      entry_price,
+                      exit_price,
+                      wager_amount,
+                      ticks,
+                      option_type
+                    );
+                    console.log("boom_100 winnings: ", winnings);
+                  } else if (cleanedSyntheticModel == "crash_100") {
+                    winnings = crash100_winnings(
+                      entry_price,
+                      exit_price,
+                      wager_amount,
+                      ticks,
+                      option_type
+                    );
+                    console.log("crash_100 winnings: ", winnings);
+                  } else if (
+                    synthetic_type.includes("even") ||
+                    synthetic_type.includes("odd")
+                  ) {
+                    winnings = even_odd_winnings(
+                      option_type,
+                      wager_amount,
+                      exit_price
+                    );
+                    console.log("even_odd winnings: ", winnings);
+                  } else if (
+                    synthetic_type.includes("matches") ||
+                    synthetic_type.includes("differs")
+                  ) {
+                    winnings = matches_differs_winnings(
+                      option_type,
+                      last_digit_prediction,
+                      wager_amount,
+                      exit_price
+                    );
+                    console.log("matches_differs winnings: ", winnings);
+                  } else {
+                    const volatilityType = synthetic_type.includes(
+                      "volatility_10"
+                    )
+                      ? 10
+                      : 25;
+
+                    console.log("volatilityType: ", volatilityType);
+
+                    winnings = vol_rise_fall_winnings(
+                      entry_price,
+                      exit_price,
+                      wager_amount,
+                      ticks,
+                      volatilityType,
+                      option_type
+                    );
+                    console.log("volatility_rise_fall winnings: ", winnings);
+                  }
+
+                  // Insert sell trade inside database
+                  const insertSellTrade = await databasePool.query(
+                    "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+                    [
+                      user_id,
+                      synthetic_type,
+                      transaction_time_asia_kuala_lumpur,
+                      sell_transaction,
+                      parseFloat(winnings.toFixed(2)),
+                      updated_wallet_balance,
+                      ticks,
+                      exit_price,
+                    ]
+                  );
+
+                  console.log("insertSellTrade: ", insertSellTrade.rows[0]);
+                  // Notify frontend to display user's winnings or losses
+                  return 200;
+                }, ticks * 1500);
+              } else {
+                console.log("Invalid Updated Wallet Balance");
+                return 400;
+              }
             }
           } catch (err) {
             console.log("Failed somewhere");
@@ -575,28 +574,6 @@ const Mutation = new GraphQLObjectType({
           ).rows[0].wallet_balance;
         } catch (err) {
           throw new Error("Failed to reset user's balance");
-        }
-      },
-    },
-
-    updateBalance: {
-      type: GraphQLFloat,
-      args: {
-        user_id: { type: new GraphQLNonNull(GraphQLInt) },
-        stakePayout: { type: new GraphQLNonNull(GraphQLFloat) },
-      },
-      resolve: async (parent, args, context, resolveInfo) => {
-        console.log("user id: ", args.user_id);
-        console.log("stake payout: ", args.stakePayout);
-        try {
-          return (
-            await databasePool.query(
-              "UPDATE users SET wallet_balance = wallet_balance + $2 WHERE user_id = $1 RETURNING wallet_balance",
-              [args.user_id, args.stakePayout]
-            )
-          ).rows[0].wallet_balance;
-        } catch (err) {
-          throw new Error("Failed to update user's balance");
         }
       },
     },
