@@ -487,7 +487,7 @@ const Mutation = new GraphQLObjectType({
         }
       },
     },
-    forgotPassword: {
+    resetPassword: {
       type: scalarResolvers.Void,
       args: {
         email: { type: GraphQLNonNull(scalarResolvers.EmailAddress) },
