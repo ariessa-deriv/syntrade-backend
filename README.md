@@ -162,10 +162,8 @@ curl --location --request GET 'http://localhost:4000' \
 
   ```
   # Get call and put prices of a synthetic model
-  {
-    prices(
-        type: true, syntheticModel: "boom_100", tradeType: "rise_fall", stake: 10.00, ticks: 5
-      )
+  query {
+    prices(wagerType: "stake", syntheticModel: "boom_100", tradeType: "rise_fall", wagerAmount: 20, ticks: 5)
   }
   ```
 
