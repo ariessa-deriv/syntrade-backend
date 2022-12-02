@@ -20,87 +20,339 @@ const transporter = require("../lib/mail");
 const handlebars = require("handlebars");
 const path = require("path");
 const fs = require("fs");
+const {
+  convertTimezone,
+  findTransactionByTime,
+} = require("../lib/utilities");
+const cacheClient = require("../lib/cache");
+const {
+  boom100_winnings,
+  crash100_winnings,
+  even_odd_winnings,
+  match_differs_winnings,
+  vol_rise_fall_winnings,
+} = require("../lib/pricing");
 
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: () => ({
     createBuyTrade: {
-      type: scalarResolvers.Void,
+      type: GraphQLInt, // return 200 for OK and 400 for other errors
       args: {
         user_id: { type: GraphQLNonNull(GraphQLInt) },
         synthetic_type: { type: GraphQLNonNull(GraphQLString) },
-        trade_result: {
-          type: GraphQLNonNull(GraphQLFloat),
-        },
+        option_type: { type: GraphQLNonNull(GraphQLString) },
+        wager_amount: { type: GraphQLNonNull(GraphQLFloat) },
         ticks: { type: GraphQLNonNull(GraphQLInt) },
+        last_digit_prediction: { type: GraphQLInt },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        try {
-          const transaction_type = "buy";
-          const trade_result = args.trade_result * -1;
+        const validSyntheticType = [
+          "boom_100_rise",
+          "boom_100_fall",
+          "crash_100_rise",
+          "crash_100_fall",
+          "volatility_10_even",
+          "volatility_10_odd",
+          "volatility_10_matches",
+          "volatility_10_differs",
+          "volatility_10_rise",
+          "volatility_10_fall",
+          "volatility_25_even",
+          "volatility_25_odd",
+          "volatility_25_matches",
+          "volatility_25_differs",
+          "volatility_25_rise",
+          "volatility_25_fall",
+        ];
 
-          console.log("user_id: ", args.user_id);
-          console.log("trade_result: ", trade_result);
-          console.log("syntheticType: ", args.synthetic_type);
+        const user_id = args.user_id;
+        const synthetic_type = args.synthetic_type.toLowerCase();
+        const option_type = args.option_type.toLowerCase();
+        const wager_amount = parseFloat(args.wager_amount.toFixed(2));
+        const ticks = args.ticks;
+        const last_digit_prediction = args.last_digit_prediction | 0;
+        let isSyntheticTypeValid = false;
+        let isOptionTypeValid = false;
+        let isWagerAmountValid = false;
+        let isTicksValid = false;
+        let isCurrentWalletBalanceSufficient = false;
+        let isUpdatedWalletBalanceValid = false;
+        const buy_transaction = "buy";
+        const sell_transaction = "sell";
+        const transaction_time_asia_kuala_lumpur =
+          Math.floor(Date.parse(convertTimezone(Date.now())) / 1000) - 1;
+        const cleanedSyntheticModel = synthetic_type.substr(
+          0,
+          synthetic_type.lastIndexOf("_")
+        );
+        let entry_price = 0.0;
+        let exit_price = 0.0;
+        let transaction = [];
+        let buyTradeTransaction = [];
+        let winnings = 0;
 
-          // Calculate current wallet balance
-          const user_details = await databasePool.query(
-            `SELECT * FROM users WHERE users.user_id = $1;`,
-            [args.user_id]
-          );
+        console.log(
+          "transaction_time_asia_kuala_lumpur: ",
+          transaction_time_asia_kuala_lumpur
+        );
 
-          console.log("user_details", user_details);
+        console.log("cleanedSyntheticModel: ", cleanedSyntheticModel);
 
-          const current_wallet_balance = user_details.rows[0].wallet_balance;
+        // Check if synthetic_type is valid or not
+        isSyntheticTypeValid = validSyntheticType.includes(synthetic_type);
 
-          const res = await databasePool.query(
-            "INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance, ticks) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-            [
-              args.user_id,
-              args.synthetic_type,
-              transaction_type,
-              trade_result,
-              current_wallet_balance,
-              args.ticks,
-            ]
-          );
+        // Check if option_type is valid or not
+        isOptionTypeValid = option_type == "call" || option_type == "put";
 
-          // If query is successful, return 200 OK
-          if (res.rows[0]) {
-            // return 200;
-            const tradeTime = res.rows[0].trade_time;
-            const ticks = res.rows[0].ticks;
+        // Check if wager_amount is valid or not
+        isWagerAmountValid = wager_amount >= 1.0;
 
-            console.log("tradeTime: ", tradeTime);
-            console.log("ticks: ", ticks);
-            // Close trade after end time is reached
-            const sellTradeTime = tradeTime + ticks;
+        // Check if ticks is valid or not
+        isTicksValid = ticks >= 1 && ticks <= 10;
 
-            // Create sell trade
-            await databasePool.query(
-              "INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance, ticks) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-              [
-                args.user_id,
-                args.synthetic_type,
-                transaction_type,
-                trade_result,
-                current_wallet_balance,
-                args.ticks,
-              ]
+        console.log("synthetic_type: ", synthetic_type);
+        console.log("isSyntheticValid: ", isSyntheticTypeValid);
+        console.log("option_type: ", option_type);
+        console.log("isOptionTypeValid: ", isOptionTypeValid);
+        console.log("wager_amount: ", wager_amount);
+        console.log("typeof wager_amount: ", typeof wager_amount);
+        console.log("isWagerAmountValid: ", isWagerAmountValid);
+        console.log("ticks: ", ticks);
+        console.log("isTicksValid: ", isTicksValid);
+
+        // Check if synthetic_type, wager_type, wager_amount and ticks are valid or not
+        if (
+          isSyntheticTypeValid &&
+          isOptionTypeValid &&
+          isWagerAmountValid &&
+          isTicksValid
+        ) {
+          console.log("synthetic_type, wager_amount and ticks are valid");
+
+          try {
+            // Get user's current wallet balance
+            const current_wallet_balance = await databasePool.query(
+              `SELECT wallet_balance FROM users WHERE users.user_id = $1;`,
+              [user_id]
             );
 
-            // If type is stake, then take the money input as stake
-            // Else if type is payout, then take the pricing above the blue/red buttons as stake
-            boom100_winnings(
-              entry_price, // current price when user clicks on button
-              exit_price, // entry price + ticks
-              trade_result, // stake
-              ticks,
-              option_type // blue (call) or red (put)
+            // Check if user's current wallet balance is more than wager_amount or not
+            isCurrentWalletBalanceSufficient =
+              current_wallet_balance.rows[0].wallet_balance >= wager_amount;
+
+            console.log(
+              "current_wallet_balance: ",
+              current_wallet_balance.rows[0].wallet_balance
             );
+            console.log(
+              "isCurrentWalletBalanceSufficient: ",
+              isCurrentWalletBalanceSufficient
+            );
+
+            if (isCurrentWalletBalanceSufficient) {
+              // Decrease user's current balance by wager_amount
+              const decrease_wallet_balance = await databasePool.query(
+                "UPDATE users SET wallet_balance = wallet_balance - $2 WHERE user_id = $1 RETURNING wallet_balance",
+                [user_id, wager_amount]
+              );
+
+              console.log(
+                "decrease_wallet_balance: ",
+                decrease_wallet_balance.rows[0].wallet_balance
+              );
+
+              console.log(
+                "current_wallet_balance: ",
+                current_wallet_balance.rows[0].wallet_balance
+              );
+
+              console.log(
+                "current_wallet_balance - wager_amount: ",
+                parseFloat(current_wallet_balance.rows[0].wallet_balance) -
+                  wager_amount
+              );
+
+              const updated_wallet_balance =
+                parseFloat(current_wallet_balance.rows[0].wallet_balance) -
+                wager_amount;
+
+              // Check if user's wallet balance has been correctly decreased or not
+              isUpdatedWalletBalanceValid =
+                updated_wallet_balance ==
+                decrease_wallet_balance.rows[0].wallet_balance;
+
+              console.log(
+                "isUpdatedWalletBalanceValid: ",
+                isUpdatedWalletBalanceValid
+              );
+
+              if (isUpdatedWalletBalanceValid) {
+              }
+
+              // Execute function for a maximum of 3 retries
+              for (var i = 0; i < 3; i++) {
+                console.log("transaction.length: ", transaction.length);
+                console.log("transaction.length: ", transaction.length);
+                if (transaction.length == 0) {
+                  console.log("i: ", i);
+                  transaction = await findTransactionByTime(
+                    transaction_time_asia_kuala_lumpur
+                  );
+                  console.log("transaction: ", transaction);
+                }
+              }
+
+              // console.log("transaction: ", transaction);
+
+              entry_price = JSON.parse(transaction[0])[cleanedSyntheticModel];
+
+              console.log("entry_price: ", entry_price);
+
+              // Insert buy trade inside database
+              const insertBuyTrade = await databasePool.query(
+                "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+                [
+                  user_id,
+                  synthetic_type,
+                  transaction_time_asia_kuala_lumpur,
+                  buy_transaction,
+                  wager_amount,
+                  updated_wallet_balance,
+                  ticks,
+                  entry_price,
+                ]
+              );
+
+              console.log("insertBuyTrade: ", insertBuyTrade.rows[0]);
+
+              // Notify frontend to display buy trade success snackbar
+
+              // Get entry price from transaction time in redis list
+              // let list_key =
+              //   "historical_" +
+              //   synthetic_type.substr(0, synthetic_type.lastIndexOf("_"));
+
+              // console.log("list: ", list_key);
+
+              const buyTradeEndTime =
+                parseInt(insertBuyTrade.rows[0].ticks) +
+                parseInt(insertBuyTrade.rows[0].transaction_time);
+
+              console.log(
+                "insertBuyTrade.rows[0].ticks: ",
+                insertBuyTrade.rows[0].ticks
+              );
+
+              console.log(
+                "insertBuyTrade.rows[0].trade_time: ",
+                insertBuyTrade.rows[0].transaction_time
+              );
+
+              console.log("buyTradeEndTime: ", buyTradeEndTime);
+
+              // After buy trade end time is passed, calculate user's winnings
+              setTimeout(async () => {
+                // Execute function for a maximum of three retries
+                for (var i = 0; i < 3; i++) {
+                  console.log(
+                    "buyTradeTransaction.length: ",
+                    buyTradeTransaction.length
+                  );
+                  if (buyTradeTransaction.length == 0) {
+                    console.log("i: ", i);
+                    buyTradeTransaction = await findTransactionByTime(
+                      buyTradeEndTime
+                    );
+                    console.log("buyTradeTransaction: ", buyTradeTransaction);
+                  }
+                }
+
+                // console.log("buyTradeTransaction: ", buyTradeTransaction);
+
+                exit_price = JSON.parse(buyTradeTransaction[0])[
+                  cleanedSyntheticModel
+                ];
+
+                console.log("exit_price: ", exit_price);
+
+                if (cleanedSyntheticModel == "boom_100") {
+                  winnings = boom100_winnings(
+                    entry_price,
+                    exit_price,
+                    wager_amount,
+                    ticks,
+                    option_type
+                  );
+                  console.log("boom_100 winnings: ", winnings);
+                } else if (cleanedSyntheticModel == "crash_100") {
+                  winnings = crash100_winnings(
+                    entry_price,
+                    exit_price,
+                    wager_amount,
+                    ticks,
+                    option_type
+                  );
+                  console.log("crash_100 winnings: ", winnings);
+                } else if (synthetic_type.includes("even_odd")) {
+                  winnings = even_odd_winnings(
+                    option_type,
+                    wager_amount,
+                    exit_price
+                  );
+                  console.log("even_odd winnings: ", winnings);
+                } else if (synthetic_type.includes("matches_differs")) {
+                  winnings = matches_differs_winnings(
+                    option_type,
+                    last_digit_prediction,
+                    wager_amount,
+                    exit_price
+                  );
+                  console.log("matches_differs winnings: ", winnings);
+                } else {
+                  const volatilityType = synthetic_type.includes(
+                    "volatility_10"
+                  )
+                    ? 10
+                    : 25;
+
+                  console.log("volatilityType: ", volatilityType);
+
+                  winnings = vol_rise_fall_winnings(
+                    entry_price,
+                    exit_price,
+                    wager_amount,
+                    ticks,
+                    volatilityType,
+                    option_type
+                  );
+                  console.log("volatility_rise_fall winnings: ", winnings);
+                }
+
+                // Insert sell trade inside database
+                const insertSellTrade = await databasePool.query(
+                  "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+                  [
+                    user_id,
+                    synthetic_type,
+                    transaction_time_asia_kuala_lumpur,
+                    sell_transaction,
+                    parseFloat(winnings.toFixed(2)),
+                    updated_wallet_balance,
+                    ticks,
+                    exit_price,
+                  ]
+                );
+
+                console.log("insertSellTrade: ", insertSellTrade.rows[0]);
+                // Notify frontend to display user's winnings or losses
+                return 200;
+              }, ticks * 1500);
+            }
+          } catch (err) {
+            console.log("Failed somewhere");
+            return 400;
           }
-        } catch (err) {
-          console.log("Failed to insert new trade");
         }
       },
     },
