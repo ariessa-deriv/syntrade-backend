@@ -73,6 +73,7 @@ const Mutation = new GraphQLObjectType({
         let isOptionTypeValid = false;
         let isWagerAmountValid = false;
         let isTicksValid = false;
+        let isLastDigitPredictionValid = false;
         let isCurrentWalletBalanceSufficient = false;
         let isUpdatedWalletBalanceValid = false;
         const buy_transaction = "buy";
@@ -108,25 +109,31 @@ const Mutation = new GraphQLObjectType({
         // Check if ticks is valid or not
         isTicksValid = ticks >= 1 && ticks <= 10;
 
+        // Check if last digit prediction is valid or not
+        isLastDigitPredictionValid =
+          last_digit_prediction >= 0 && last_digit_prediction <= 9;
+
         console.log("synthetic_type: ", synthetic_type);
         console.log("isSyntheticValid: ", isSyntheticTypeValid);
         console.log("option_type: ", option_type);
         console.log("isOptionTypeValid: ", isOptionTypeValid);
         console.log("wager_amount: ", wager_amount);
-        console.log("typeof wager_amount: ", typeof wager_amount);
         console.log("isWagerAmountValid: ", isWagerAmountValid);
         console.log("ticks: ", ticks);
         console.log("isTicksValid: ", isTicksValid);
+        console.log("last_digit_prediction: ", last_digit_prediction);
+        console.log("isLastDigitPrediction: ", isLastDigitPredictionValid);
 
-        // Check if synthetic_type, wager_type, wager_amount and ticks are valid or not
+        // Check if synthetic_type, option_type, wager_amount, ticks, and last_digit_prediction are valid or not
         if (
           isSyntheticTypeValid &&
           isOptionTypeValid &&
           isWagerAmountValid &&
-          isTicksValid
+          isTicksValid &&
+          isLastDigitPredictionValid
         ) {
           console.log(
-            "synthetic_type, option_type, wager_amount and ticks are valid"
+            "synthetic_type, option_type, wager_amount, ticks, and last_digit_prediction are valid"
           );
 
           try {
@@ -254,8 +261,6 @@ const Mutation = new GraphQLObjectType({
                     }
                   }
 
-                  // console.log("buyTradeTransaction: ", buyTradeTransaction);
-
                   exit_price = JSON.parse(buyTradeTransaction[0])[
                     cleanedSyntheticModel
                   ];
@@ -337,8 +342,11 @@ const Mutation = new GraphQLObjectType({
                   );
 
                   console.log("insertSellTrade: ", insertSellTrade.rows[0]);
+
                   // Notify frontend to display user's winnings or losses
-                  return 200;
+                  if (insertSellTrade.rows.length == 1) {
+                    return 200;
+                  }
                 }, ticks * 1500);
               } else {
                 console.log("Invalid Updated Wallet Balance");
