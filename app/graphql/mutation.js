@@ -36,12 +36,12 @@ const Mutation = new GraphQLObjectType({
     createTrade: {
       type: GraphQLInt, // return 200 for OK and 400 for other errors
       args: {
-        user_id: { type: GraphQLNonNull(GraphQLInt) },
-        synthetic_type: { type: GraphQLNonNull(GraphQLString) },
-        option_type: { type: GraphQLNonNull(GraphQLString) },
-        wager_amount: { type: GraphQLNonNull(GraphQLFloat) },
+        userId: { type: GraphQLNonNull(GraphQLInt) },
+        syntheticType: { type: GraphQLNonNull(GraphQLString) },
+        optionType: { type: GraphQLNonNull(GraphQLString) },
+        wagerAmount: { type: GraphQLNonNull(GraphQLFloat) },
         ticks: { type: GraphQLNonNull(GraphQLInt) },
-        last_digit_prediction: { type: GraphQLInt },
+        lastDigitPrediction: { type: GraphQLInt },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         const validSyntheticType = [
@@ -63,12 +63,12 @@ const Mutation = new GraphQLObjectType({
           "volatility_25_fall",
         ];
 
-        const user_id = args.user_id;
-        const synthetic_type = args.synthetic_type.toLowerCase();
-        const option_type = args.option_type.toLowerCase();
-        const wager_amount = parseFloat(args.wager_amount.toFixed(2));
+        const userId = args.userId;
+        const syntheticType = args.syntheticType.toLowerCase();
+        const optionType = args.optionType.toLowerCase();
+        const wagerAmount = parseFloat(args.wagerAmount.toFixed(2));
         const ticks = args.ticks;
-        const last_digit_prediction = args.last_digit_prediction || 0;
+        const lastDigitPrediction = args.lastDigitPrediction || 0;
         let isSyntheticTypeValid = false;
         let isOptionTypeValid = false;
         let isWagerAmountValid = false;
@@ -76,55 +76,55 @@ const Mutation = new GraphQLObjectType({
         let isLastDigitPredictionValid = false;
         let isCurrentWalletBalanceSufficient = false;
         let isUpdatedWalletBalanceValid = false;
-        const buy_transaction = "buy";
-        const sell_transaction = "sell";
-        const transaction_time_asia_kuala_lumpur =
+        const buyTransaction = "buy";
+        const sellTransaction = "sell";
+        const transactionTimeAsiaKualaLumpur =
           Math.floor(Date.parse(convertTimezone(Date.now())) / 1000) - 1;
-        const cleanedSyntheticModel = synthetic_type.substr(
+        const cleanedSyntheticModel = syntheticType.substr(
           0,
-          synthetic_type.lastIndexOf("_")
+          syntheticType.lastIndexOf("_")
         );
-        let entry_price = 0.0;
-        let exit_price = 0.0;
+        let entryPrice = 0.0;
+        let exitPrice = 0.0;
         let transaction = [];
         let buyTradeTransaction = [];
         let winnings = 0;
 
         console.log(
-          "transaction_time_asia_kuala_lumpur: ",
-          transaction_time_asia_kuala_lumpur
+          "transactionTimeAsiaKualaLumpur: ",
+          transactionTimeAsiaKualaLumpur
         );
 
         console.log("cleanedSyntheticModel: ", cleanedSyntheticModel);
 
-        // Check if synthetic_type is valid or not
-        isSyntheticTypeValid = validSyntheticType.includes(synthetic_type);
+        // Check if syntheticType is valid or not
+        isSyntheticTypeValid = validSyntheticType.includes(syntheticType);
 
-        // Check if option_type is valid or not
-        isOptionTypeValid = option_type == "call" || option_type == "put";
+        // Check if optionType is valid or not
+        isOptionTypeValid = optionType == "call" || optionType == "put";
 
-        // Check if wager_amount is valid or not
-        isWagerAmountValid = wager_amount >= 1.0;
+        // Check if wagerAmount is valid or not
+        isWagerAmountValid = wagerAmount >= 1.0;
 
         // Check if ticks is valid or not
         isTicksValid = ticks >= 1 && ticks <= 10;
 
         // Check if last digit prediction is valid or not
         isLastDigitPredictionValid =
-          last_digit_prediction >= 0 && last_digit_prediction <= 9;
+          lastDigitPrediction >= 0 && lastDigitPrediction <= 9;
 
-        console.log("synthetic_type: ", synthetic_type);
+        console.log("syntheticType: ", syntheticType);
         console.log("isSyntheticValid: ", isSyntheticTypeValid);
-        console.log("option_type: ", option_type);
+        console.log("optionType: ", optionType);
         console.log("isOptionTypeValid: ", isOptionTypeValid);
-        console.log("wager_amount: ", wager_amount);
+        console.log("wagerAmount: ", wagerAmount);
         console.log("isWagerAmountValid: ", isWagerAmountValid);
         console.log("ticks: ", ticks);
         console.log("isTicksValid: ", isTicksValid);
-        console.log("last_digit_prediction: ", last_digit_prediction);
+        console.log("lastDigitPrediction: ", lastDigitPrediction);
         console.log("isLastDigitPrediction: ", isLastDigitPredictionValid);
 
-        // Check if synthetic_type, option_type, wager_amount, ticks, and last_digit_prediction are valid or not
+        // Check if syntheticType, optionType, wagerAmount, ticks, and lastDigitPrediction are valid or not
         if (
           isSyntheticTypeValid &&
           isOptionTypeValid &&
@@ -133,19 +133,19 @@ const Mutation = new GraphQLObjectType({
           isLastDigitPredictionValid
         ) {
           console.log(
-            "synthetic_type, option_type, wager_amount, ticks, and last_digit_prediction are valid"
+            "syntheticType, optionType, wagerAmount, ticks, and lastDigitPrediction are valid"
           );
 
           try {
             // Get user's current wallet balance
             const current_wallet_balance = await databasePool.query(
               `SELECT wallet_balance FROM users WHERE users.user_id = $1;`,
-              [user_id]
+              [userId]
             );
 
-            // Check if user's current wallet balance is more than wager_amount or not
+            // Check if user's current wallet balance is more than wagerAmount or not
             isCurrentWalletBalanceSufficient =
-              current_wallet_balance.rows[0].wallet_balance >= wager_amount;
+              current_wallet_balance.rows[0].wallet_balance >= wagerAmount;
 
             console.log(
               "current_wallet_balance: ",
@@ -157,10 +157,10 @@ const Mutation = new GraphQLObjectType({
             );
 
             if (isCurrentWalletBalanceSufficient) {
-              // Decrease user's current balance by wager_amount
+              // Decrease user's current balance by wagerAmount
               const decrease_wallet_balance = await databasePool.query(
                 "UPDATE users SET wallet_balance = wallet_balance - $2 WHERE user_id = $1 RETURNING wallet_balance",
-                [user_id, wager_amount]
+                [userId, wagerAmount]
               );
 
               console.log(
@@ -174,14 +174,14 @@ const Mutation = new GraphQLObjectType({
               );
 
               console.log(
-                "current_wallet_balance - wager_amount: ",
+                "current_wallet_balance - wagerAmount: ",
                 parseFloat(current_wallet_balance.rows[0].wallet_balance) -
-                  wager_amount
+                  wagerAmount
               );
 
               const updated_wallet_balance =
                 parseFloat(current_wallet_balance.rows[0].wallet_balance) -
-                wager_amount;
+                wagerAmount;
 
               // Check if user's wallet balance has been correctly decreased or not
               isUpdatedWalletBalanceValid =
@@ -201,193 +201,221 @@ const Mutation = new GraphQLObjectType({
                   if (transaction.length == 0) {
                     console.log("i: ", i);
                     transaction = await findTransactionByTime(
-                      transaction_time_asia_kuala_lumpur
+                      transactionTimeAsiaKualaLumpur
                     );
                     console.log("transaction: ", transaction);
                   }
                 }
 
-                entry_price = JSON.parse(transaction[0])[cleanedSyntheticModel];
+                entryPrice = JSON.parse(transaction[0])[cleanedSyntheticModel];
 
-                console.log("entry_price: ", entry_price);
+                console.log("entryPrice: ", entryPrice);
 
                 // Insert buy trade inside database
                 const insertBuyTrade = await databasePool.query(
                   "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
                   [
-                    user_id,
-                    synthetic_type,
-                    transaction_time_asia_kuala_lumpur,
-                    buy_transaction,
-                    wager_amount,
+                    userId,
+                    syntheticType,
+                    transactionTimeAsiaKualaLumpur,
+                    buyTransaction,
+                    wagerAmount,
                     updated_wallet_balance,
                     ticks,
-                    entry_price,
+                    entryPrice,
                   ]
                 );
 
                 console.log("insertBuyTrade: ", insertBuyTrade.rows[0]);
 
-                const buyTradeEndTime =
-                  parseInt(insertBuyTrade.rows[0].ticks) +
-                  parseInt(insertBuyTrade.rows[0].transaction_time);
+                if (insertBuyTrade.rows.length == 1) {
+                  const buyTradeEndTime =
+                    parseInt(insertBuyTrade.rows[0].ticks) +
+                    parseInt(insertBuyTrade.rows[0].transaction_time);
 
-                console.log(
-                  "insertBuyTrade.rows[0].ticks: ",
-                  insertBuyTrade.rows[0].ticks
-                );
-
-                console.log(
-                  "insertBuyTrade.rows[0].trade_time: ",
-                  insertBuyTrade.rows[0].transaction_time
-                );
-
-                console.log("buyTradeEndTime: ", buyTradeEndTime);
-
-                // After buy trade end time is passed, calculate user's winnings
-                setTimeout(async () => {
-                  // Execute function for a maximum of three retries
-                  for (var i = 0; i < 3; i++) {
-                    console.log(
-                      "buyTradeTransaction.length: ",
-                      buyTradeTransaction.length
-                    );
-                    if (buyTradeTransaction.length == 0) {
-                      console.log("i: ", i);
-                      buyTradeTransaction = await findTransactionByTime(
-                        buyTradeEndTime
-                      );
-                      console.log("buyTradeTransaction: ", buyTradeTransaction);
-                    }
-                  }
-
-                  exit_price = JSON.parse(buyTradeTransaction[0])[
-                    cleanedSyntheticModel
-                  ];
-
-                  console.log("exit_price: ", exit_price);
-
-                  if (cleanedSyntheticModel == "boom_100") {
-                    winnings = boom100_winnings(
-                      entry_price,
-                      exit_price,
-                      wager_amount,
-                      ticks,
-                      option_type
-                    );
-                    console.log("boom_100 winnings: ", winnings);
-                  } else if (cleanedSyntheticModel == "crash_100") {
-                    winnings = crash100_winnings(
-                      entry_price,
-                      exit_price,
-                      wager_amount,
-                      ticks,
-                      option_type
-                    );
-                    console.log("crash_100 winnings: ", winnings);
-                  } else if (
-                    synthetic_type.includes("even") ||
-                    synthetic_type.includes("odd")
-                  ) {
-                    winnings = even_odd_winnings(
-                      option_type,
-                      wager_amount,
-                      exit_price
-                    );
-                    console.log("even_odd winnings: ", winnings);
-                  } else if (
-                    synthetic_type.includes("matches") ||
-                    synthetic_type.includes("differs")
-                  ) {
-                    winnings = matches_differs_winnings(
-                      option_type,
-                      last_digit_prediction,
-                      wager_amount,
-                      exit_price
-                    );
-                    console.log("matches_differs winnings: ", winnings);
-                  } else {
-                    const volatilityType = synthetic_type.includes(
-                      "volatility_10"
-                    )
-                      ? 10
-                      : 25;
-
-                    console.log("volatilityType: ", volatilityType);
-
-                    winnings = vol_rise_fall_winnings(
-                      entry_price,
-                      exit_price,
-                      wager_amount,
-                      ticks,
-                      volatilityType,
-                      option_type
-                    );
-                    console.log("volatility_rise_fall winnings: ", winnings);
-                  }
-
-                  // Insert sell trade inside database
-                  const insertSellTrade = await databasePool.query(
-                    "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
-                    [
-                      user_id,
-                      synthetic_type,
-                      transaction_time_asia_kuala_lumpur,
-                      sell_transaction,
-                      parseFloat(winnings.toFixed(2)),
-                      updated_wallet_balance,
-                      ticks,
-                      exit_price,
-                    ]
+                  console.log(
+                    "insertBuyTrade.rows[0].ticks: ",
+                    insertBuyTrade.rows[0].ticks
                   );
 
-                  console.log("insertSellTrade: ", insertSellTrade.rows[0]);
+                  console.log(
+                    "insertBuyTrade.rows[0].trade_time: ",
+                    insertBuyTrade.rows[0].transaction_time
+                  );
 
-                  // Notify frontend to display user's winnings or losses
-                  if (insertSellTrade.rows.length == 1) {
-                    return 200;
-                  }
-                }, ticks * 1500);
+                  console.log("buyTradeEndTime: ", buyTradeEndTime);
+
+                  // After buy trade end time is passed, calculate user's winnings
+                  setTimeout(async () => {
+                    // Execute function for a maximum of three retries
+                    for (var i = 0; i < 3; i++) {
+                      console.log(
+                        "buyTradeTransaction.length: ",
+                        buyTradeTransaction.length
+                      );
+                      if (buyTradeTransaction.length == 0) {
+                        console.log("i: ", i);
+                        buyTradeTransaction = await findTransactionByTime(
+                          buyTradeEndTime
+                        );
+                        console.log(
+                          "buyTradeTransaction: ",
+                          buyTradeTransaction
+                        );
+                      }
+                    }
+
+                    exitPrice = JSON.parse(buyTradeTransaction[0])[
+                      cleanedSyntheticModel
+                    ];
+
+                    console.log("exitPrice: ", exitPrice);
+
+                    if (cleanedSyntheticModel == "boom_100") {
+                      winnings = boom100_winnings(
+                        entryPrice,
+                        exitPrice,
+                        wagerAmount,
+                        ticks,
+                        optionType
+                      );
+                      console.log("boom_100 winnings: ", winnings);
+                    } else if (cleanedSyntheticModel == "crash_100") {
+                      winnings = crash100_winnings(
+                        entryPrice,
+                        exitPrice,
+                        wagerAmount,
+                        ticks,
+                        optionType
+                      );
+                      console.log("crash_100 winnings: ", winnings);
+                    } else if (
+                      syntheticType.includes("even") ||
+                      syntheticType.includes("odd")
+                    ) {
+                      winnings = even_odd_winnings(
+                        optionType,
+                        wagerAmount,
+                        exitPrice
+                      );
+                      console.log("even_odd winnings: ", winnings);
+                    } else if (
+                      syntheticType.includes("matches") ||
+                      syntheticType.includes("differs")
+                    ) {
+                      winnings = matches_differs_winnings(
+                        optionType,
+                        lastDigitPrediction,
+                        wagerAmount,
+                        exitPrice
+                      );
+                      console.log("matches_differs winnings: ", winnings);
+                    } else {
+                      const volatilityType = syntheticType.includes(
+                        "volatility_10"
+                      )
+                        ? 10
+                        : 25;
+
+                      console.log("volatilityType: ", volatilityType);
+
+                      winnings = vol_rise_fall_winnings(
+                        entryPrice,
+                        exitPrice,
+                        wagerAmount,
+                        ticks,
+                        volatilityType,
+                        optionType
+                      );
+                      console.log("volatility_rise_fall winnings: ", winnings);
+                    }
+
+                    // Insert sell trade inside database
+                    const insertSellTrade = await databasePool.query(
+                      "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+                      [
+                        userId,
+                        syntheticType,
+                        transactionTimeAsiaKualaLumpur,
+                        sellTransaction,
+                        parseFloat(winnings.toFixed(2)),
+                        updated_wallet_balance,
+                        ticks,
+                        exitPrice,
+                      ]
+                    );
+
+                    console.log("insertSellTrade: ", insertSellTrade.rows[0]);
+
+                    // Notify frontend to display user's winnings or losses
+                    if (insertSellTrade.rows.length == 1) {
+                      return 200;
+                    }
+                  }, ticks * 1500);
+                } else {
+                  console.log("Failed to insert buy trade into database");
+                  return 400;
+                }
               } else {
                 console.log("Invalid Updated Wallet Balance");
                 return 400;
               }
             }
           } catch (err) {
-            console.log("Failed somewhere");
+            console.log("Error: ", err);
             return 400;
           }
         }
       },
     },
     changePassword: {
-      type: scalarResolvers.Void,
+      type: GraphQLInt,
       args: {
-        user_id: { type: GraphQLNonNull(GraphQLInt) },
-        password: { type: GraphQLNonNull(GraphQLString) },
+        userId: { type: GraphQLNonNull(GraphQLInt) },
+        curentPassword: { type: GraphQLNonNull(GraphQLString) },
+        newPassword: { type: GraphQLNonNull(GraphQLString) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        try {
-          // TODO: Get user id from JWT
-          await databasePool.query(
-            "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
-            [args.user_id, args.password]
-          );
-          // return (
-          //   await databasePool.query(
-          //     "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
-          //     [args.user_id, args.password]
-          //   )
-          // ).rows[0];
-        } catch (err) {
-          throw new Error("Failed to change user's password");
+        const userId = args.userId;
+        const currentPassword = args.currentPassword;
+        const newPassword = args.newPassword;
+
+        const isUserIdValid = userId > 0;
+        const isCurrentPasswordValid = isPasswordValid(currentPassword);
+        const isNewPasswordValid = isNewPasswordValid(newPassword);
+        const doesPasswordsMatch = currentPassword === newPassword;
+
+        if (
+          isUserIdValid &&
+          isCurrentPasswordValid &&
+          isNewPasswordValid &&
+          !doesPasswordsMatch
+        ) {
+          try {
+            // Validate both passwords
+            // Check if user with supplied userId exists in database
+            // Check if both oldPassword and newPassword is the same or not
+            // Check if old password matches the password in database
+            // If old password is a match, change password
+            const changePassword = await databasePool.query(
+              "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
+              [args.userId, args.newPassword]
+            );
+
+            if (changePassword.rows.length == 1) {
+              return 200;
+            }
+          } catch (err) {
+            console.log("Error: ", err);
+            return 400;
+          }
         }
       },
     },
     deleteUser: {
       type: User,
       args: {
-        user_id: { type: GraphQLNonNull(GraphQLInt) },
+        userId: { type: GraphQLNonNull(GraphQLInt) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         try {
@@ -395,7 +423,7 @@ const Mutation = new GraphQLObjectType({
           return (
             await databasePool.query(
               "DELETE FROM users WHERE user_id = $1 RETURNING *",
-              [args.user_id]
+              [args.userId]
             )
           ).rows[0];
         } catch (err) {
@@ -472,7 +500,7 @@ const Mutation = new GraphQLObjectType({
           // Create JWT
           const token = jwt.sign(
             {
-              id: userToLogin.user_id,
+              id: userToLogin.userId,
             },
             process.env.JWT_SECRET,
             {
@@ -531,7 +559,7 @@ const Mutation = new GraphQLObjectType({
             // Update user's password with newly generated random password
             await databasePool.query(
               "UPDATE users SET password = $2 WHERE user_id = $1",
-              [args.user_id, password]
+              [args.userId, password]
             );
 
             // TODO: Create password reset link for user
@@ -570,14 +598,14 @@ const Mutation = new GraphQLObjectType({
     resetBalance: {
       type: GraphQLFloat,
       args: {
-        user_id: { type: GraphQLNonNull(GraphQLInt) },
+        userId: { type: GraphQLNonNull(GraphQLInt) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         try {
           return (
             await databasePool.query(
               "UPDATE users SET wallet_balance = 10000 WHERE user_id = $1 RETURNING wallet_balance",
-              [args.user_id]
+              [args.userId]
             )
           ).rows[0].wallet_balance;
         } catch (err) {
