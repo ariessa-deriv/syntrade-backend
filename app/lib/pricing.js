@@ -373,7 +373,7 @@ const even_odd_winnings = (bet, stake, exit_price) => {
   comm = Math.max(0.02, stake * 0.02);
   net_stake = stake - comm;
 
-  if (bet === "even") {
+  if (bet === "call") {
     if (Number.parseInt(last_digit % 2) === 0) {
       winnings = 2 * net_stake;
     } else {
@@ -381,7 +381,7 @@ const even_odd_winnings = (bet, stake, exit_price) => {
     }
   }
 
-  if (bet === "odd") {
+  if (bet === "put") {
     if (Number.parseInt(last_digit % 2) !== 0) {
       winnings = 2 * net_stake;
     } else {
@@ -397,7 +397,7 @@ const even_odd_winnings = (bet, stake, exit_price) => {
 // even_odd_winnings("even", 10, 397.33);
 // even_odd_winnings("odd", 10, 397.33);
 
-const match_differs_payout = (stake) => {
+const matches_differs_payout = (stake) => {
   var differs_payoff, matches_payoff;
 
   if (stake >= 1) {
@@ -417,7 +417,7 @@ const match_differs_payout = (stake) => {
   }
 };
 
-const match_differs_stake = (payout) => {
+const matches_differs_stake = (payout) => {
   var differs_stake, matches_stake;
   differs_stake = Math.round(payout * 91, 2) / 100;
   matches_stake = Math.round(payout * 11, 2) / 100;
@@ -441,12 +441,12 @@ const match_differs_stake = (payout) => {
   }
 };
 
-const match_differs_winnings = (bet_type, bet_digit, stake, exit_price) => {
+const matches_differs_winnings = (bet_type, bet_digit, stake, exit_price) => {
   var last_digit, winnings;
   last_digit = Number.parseInt(exit_price.toString().slice(-1)[0]);
 
   if (stake >= 1) {
-    if (bet_type === "differs") {
+    if (bet_type === "call") {
       if (last_digit !== bet_digit) {
         winnings = (stake * 100) / 91;
         // console.log(winnings);
@@ -457,7 +457,7 @@ const match_differs_winnings = (bet_type, bet_digit, stake, exit_price) => {
         return winnings;
       }
     } else {
-      if (bet_type === "matches") {
+      if (bet_type === "put") {
         if (last_digit === bet_digit) {
           winnings = (stake * 100) / 11;
           // console.log(winnings);
@@ -468,7 +468,7 @@ const match_differs_winnings = (bet_type, bet_digit, stake, exit_price) => {
           return winnings;
         }
       } else {
-        return "Bet type must be 'match' or 'differs'";
+        return "Bet type must be 'call' or 'put'";
       }
     }
   } else {
@@ -611,7 +611,7 @@ const vol_rise_fall_winnings = (
       throw new NotImplementedError("Supported option types: 'call', 'put'");
     }
   }
-  console.log(winnings);
+  // console.log(winnings);
   return winnings;
 };
 
@@ -634,9 +634,9 @@ module.exports = {
   even_odd_payout,
   even_odd_stake,
   even_odd_winnings,
-  match_differs_payout,
-  match_differs_stake,
-  match_differs_winnings,
+  matches_differs_payout,
+  matches_differs_stake,
+  matches_differs_winnings,
   bs_binary_option,
   vol_rise_fall_payout,
   vol_rise_fall_stake,
