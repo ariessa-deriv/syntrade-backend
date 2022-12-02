@@ -41,12 +41,13 @@ trade_id serial PRIMARY KEY,
 user_id serial,
 synthetic_type synthetic_type NOT NULL,
 currency CHAR (3) NOT NULL DEFAULT 'myr',
-trade_time BIGINT NOT NULL DEFAULT extract(epoch from now()),
+transaction_time BIGINT NOT NULL,
 transaction_type transaction_type NOT NULL,
-trade_result FLOAT NOT NULL,
+transaction_amount FLOAT NOT NULL,
 current_wallet_balance FLOAT NOT NULL,
 ticks INT NOT NULL CONSTRAINT within_range
   CHECK ("ticks" <@ int4range(1,11)),
+current_price FLOAT NOT NULL,
 FOREIGN KEY (user_id)
 REFERENCES users (user_id) ON DELETE CASCADE
 );
@@ -63,17 +64,17 @@ VALUES
 RETURNING *;
 
 -- Add new buy trades into table trades
-INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance, ticks) 
+INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) 
 VALUES 
-(1, 'boom_100_rise', 'buy', -1000.87, 9000, 5),
-(2, 'volatility_10_even', 'buy', -2000.99, 8888, 2),
-(3, 'crash_100_fall', 'buy', -2345.00, 8000, 4)
+(1, 'boom_100_rise', 1669996752, 'buy', -1000.87, 9000, 5, 9000.00),
+(2, 'volatility_10_even', 1669996752, 'buy', -2000.99, 8888, 2, 10100.90),
+(3, 'crash_100_fall', 1669996752, 'buy', -2345.00, 8000, 4, 9777.25)
 RETURNING *;
 
 -- Add new sell trades into table trades
-INSERT INTO trades (user_id, synthetic_type, transaction_type, trade_result, current_wallet_balance, ticks) 
+INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) 
 VALUES 
-(1, 'boom_100_rise', 'sell', +1000.87, 9000, 5),
-(2, 'volatility_10_even', 'sell', +2000.99, 8888, 2),
-(3, 'crash_100_fall', 'sell', +2345.00, 8000, 4)
+(1, 'boom_100_rise', 1669996762, 'sell', +1000.87, 9000, 5, 10000.00),
+(2, 'volatility_10_even', 1669996762, 'sell',  +2000.99, 8888, 2, 10100.20),
+(3, 'crash_100_fall', 1669996762, 'sell', +2345.00, 8000, 4, 9654.23)
 RETURNING *;
