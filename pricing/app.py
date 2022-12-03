@@ -103,7 +103,6 @@ def event():
             'time_asia_kuala_lumpur': time_asia_kuala_lumpur})
             
         yield 'data: ' + pricing + '\n\n'
-        print(pricing)
         gevent.sleep(seconds=1)
 
 @app.route('/', methods=['GET'])
