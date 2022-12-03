@@ -171,7 +171,7 @@ curl --location --request GET 'http://localhost:4000' \
   ```
   # Get current wallet balance by user id
   {
-    currentBalance(user_id: 1)
+    currentBalance(userId: 1)
   }
   ```
 
