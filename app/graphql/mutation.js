@@ -382,7 +382,7 @@ const Mutation = new GraphQLObjectType({
 
         const isUserIdValid = userId > 0;
         const isCurrentPasswordValid = isPasswordValid(currentPassword);
-        const isNewPasswordValid = isNewPasswordValid(newPassword);
+        const isNewPasswordValid = isPasswordValid(newPassword);
         const doesPasswordsMatch = currentPassword === newPassword;
 
         console.log("userId: ", userId);
@@ -502,19 +502,21 @@ const Mutation = new GraphQLObjectType({
       },
     },
     login: {
-      type: User,
+      type: GraphQLInt,
       args: {
         email: { type: GraphQLNonNull(scalarResolvers.EmailAddress) },
         password: { type: GraphQLNonNull(GraphQLString) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        // Normalise email address
-        const normalisedEmail = args.email.trim().toLowerCase();
+        const email = args.email.trim().toLowerCase();
+        const password = args.password;
+        const isEmailValid = isEmailValid(email);
+        const isPasswordValid = isPasswordValid(password);
 
-        if (isEmailValid(normalisedEmail) && isPasswordValid(args.password)) {
+        if (isEmailValid && isPasswordValid) {
           // Find user by email address
           const userToLogin = await databasePool.query(
-            `SELECT * FROM users WHERE email = '${normalisedEmail}'`
+            `SELECT * FROM users WHERE email = '${email}'`
           );
 
           // if there is no user, throw an authentication error
@@ -524,7 +526,7 @@ const Mutation = new GraphQLObjectType({
 
           // if the passwords don't match, throw an authentication error
           const valid = await bcrypt.compare(
-            args.password,
+            password,
             userToLogin.rows[0]["password"]
           );
           if (!valid) {
@@ -563,15 +565,17 @@ const Mutation = new GraphQLObjectType({
         email: { type: GraphQLNonNull(scalarResolvers.EmailAddress) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        // Normalise email address
-        const normalisedEmail = args.email.trim().toLowerCase();
-
-        var chars =
+        const email = args.email.trim().toLowerCase();
+        const isEmailValid = isEmailValid(email);
+        const chars =
           "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        var passwordLength = 12;
-        var password = "";
+        const passwordLength = 12;
+        let password = "";
 
-        if (isEmailValid(normalisedEmail)) {
+        console.log("email: ", email);
+        console.log("isEmailValid: ", isEmailValid);
+
+        if (isEmailValid) {
           // Find user by email
           const registeredUser = await databasePool.query(
             `SELECT * FROM users WHERE email = '${normalisedEmail}';`
