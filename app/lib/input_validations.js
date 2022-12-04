@@ -1,5 +1,5 @@
 // Check whether email is valid or not
-const isEmailValid = (email) => {
+const checkEmailValidity = (email) => {
   // Check if email is empty or not
   if (!email) {
     console.log("Error: Email cannot be empty");
@@ -21,7 +21,7 @@ const isEmailValid = (email) => {
 };
 
 // Check whether password is valid or not
-const isPasswordValid = (password) => {
+const checkPasswordValidity = (password) => {
   // Password must be between 8-12 characters
   // Password must have at least:
   // 1 capital letter, 1 lowercase letter, 1 digit and 1 special characters (~`!@#$%^&*()_-+={[}]|\:;"'<,>.?/)
@@ -60,4 +60,4 @@ const isPasswordValid = (password) => {
   return true;
 };
 
-module.exports = { isEmailValid, isPasswordValid };
+module.exports = { checkEmailValidity, checkPasswordValidity };
