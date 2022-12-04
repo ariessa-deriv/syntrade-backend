@@ -27,18 +27,22 @@ CREATE TYPE synthetic_type AS ENUM (
 -- Create enum type called transaction_type
 CREATE TYPE transaction_type AS ENUM ( 'buy', 'sell' );
 
+-- Instal uuid-ossp extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Create a table called users
 CREATE TABLE IF NOT EXISTS users (
-user_id serial PRIMARY KEY,
+user_id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
 email VARCHAR (255) UNIQUE NOT NULL,
-password CHAR (60) NOT NULL,
+salt CHAR (32) NOT NULL,
+hash CHAR (128) NOT NULL,
 wallet_balance FLOAT NOT NULL DEFAULT 10000.00,
 date_joined BIGINT NOT NULL DEFAULT extract(epoch from now()));
 
 -- Create a table called trades
 CREATE TABLE IF NOT EXISTS trades (
 trade_id serial PRIMARY KEY,
-user_id serial,
+user_id uuid,
 synthetic_type synthetic_type NOT NULL,
 currency CHAR (3) NOT NULL DEFAULT 'myr',
 transaction_time BIGINT NOT NULL,
@@ -56,25 +60,25 @@ REFERENCES users (user_id) ON DELETE CASCADE
 CREATE INDEX idx_user_id ON trades(user_id);
 
 -- Add new users into table users
-INSERT INTO users (email, password) 
-VALUES 
-('test123@gmail.com', '$2b$10$WOwa8qQuia0.MtkXLSTbqOsCBVFhqggB5nW5eo9Q9.rvqZRHFmlRG'),
-('johndoe@gmail.com', '$2b$10$Z7wSUnEXLLs1kpo2sSWfwe..pTuruIboPgiZ5U6wWAQTbZcTwlbwC'),
-('janet@gmail.com', '$2b$10$eKRKvtkQdIVeVQ30PnsfdOxKc3zAWgezWUM9dKtp.72Q3hHrR7VRq')
-RETURNING *;
+-- INSERT INTO users (email, salt, hash) 
+-- VALUES 
+-- ('test123@gmail.com', '$2b$10$WOwa8qQuia0.MtkXLSTbqOsCBVFhqggB5nW5eo9Q9.rvqZRHFmlRG'),
+-- ('johndoe@gmail.com', '$2b$10$Z7wSUnEXLLs1kpo2sSWfwe..pTuruIboPgiZ5U6wWAQTbZcTwlbwC'),
+-- ('janet@gmail.com', '$2b$10$eKRKvtkQdIVeVQ30PnsfdOxKc3zAWgezWUM9dKtp.72Q3hHrR7VRq')
+-- RETURNING *;
 
 -- Add new buy trades into table trades
-INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) 
-VALUES 
-(1, 'boom_100_rise', 1669996752, 'buy', -1000.87, 9000, 5, 9000.00),
-(2, 'volatility_10_even', 1669996752, 'buy', -2000.99, 8888, 2, 10100.90),
-(3, 'crash_100_fall', 1669996752, 'buy', -2345.00, 8000, 4, 9777.25)
-RETURNING *;
+-- INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) 
+-- VALUES 
+-- (1, 'boom_100_rise', 1669996752, 'buy', -1000.87, 9000, 5, 9000.00),
+-- (2, 'volatility_10_even', 1669996752, 'buy', -2000.99, 8888, 2, 10100.90),
+-- (3, 'crash_100_fall', 1669996752, 'buy', -2345.00, 8000, 4, 9777.25)
+-- RETURNING *;
 
 -- Add new sell trades into table trades
-INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) 
-VALUES 
-(1, 'boom_100_rise', 1669996762, 'sell', +1000.87, 9000, 5, 10000.00),
-(2, 'volatility_10_even', 1669996762, 'sell',  +2000.99, 8888, 2, 10100.20),
-(3, 'crash_100_fall', 1669996762, 'sell', +2345.00, 8000, 4, 9654.23)
-RETURNING *;
+-- INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) 
+-- VALUES 
+-- (1, 'boom_100_rise', 1669996762, 'sell', +1000.87, 9000, 5, 10000.00),
+-- (2, 'volatility_10_even', 1669996762, 'sell',  +2000.99, 8888, 2, 10100.20),
+-- (3, 'crash_100_fall', 1669996762, 'sell', +2345.00, 8000, 4, 9654.23)
+-- RETURNING *;
