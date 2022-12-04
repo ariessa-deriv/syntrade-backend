@@ -9,11 +9,8 @@ const {
 } = require("graphql");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const SyntheticEnum = require("./enum/synthetic");
-const TransactionEnum = require("./enum/transaction");
 const databasePool = require("../lib/database");
 const User = require("./object/user");
-const Trade = require("./object/trade");
 const { isEmailValid, isPasswordValid } = require("../lib/input_validations");
 const Cookies = require("cookies");
 const transporter = require("../lib/mail");
@@ -21,7 +18,6 @@ const handlebars = require("handlebars");
 const path = require("path");
 const fs = require("fs");
 const { convertTimezone, findTransactionByTime } = require("../lib/utilities");
-const cacheClient = require("../lib/cache");
 const {
   boom100_winnings,
   crash100_winnings,
@@ -639,11 +635,12 @@ const Mutation = new GraphQLObjectType({
         userId: { type: GraphQLNonNull(GraphQLInt) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
+        const userId = args.userId;
         try {
           return (
             await databasePool.query(
               "UPDATE users SET wallet_balance = 10000 WHERE user_id = $1 RETURNING wallet_balance",
-              [args.userId]
+              [userId]
             )
           ).rows[0].wallet_balance;
         } catch (err) {
