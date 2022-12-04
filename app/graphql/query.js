@@ -29,7 +29,7 @@ const query = new GraphQLObjectType({
   fields: () => ({
     user: {
       type: User,
-      args: { userId: { type: GraphQLNonNull(GraphQLInt) } },
+      args: { userId: { type: GraphQLNonNull(scalarResolvers.UUID) } },
       resolve: async (parent, args, context, resolveInfo) => {
         const userId = args.userId;
         const isUserIdValid = userId >= 1;

@@ -12,7 +12,7 @@ const Trade = new GraphQLObjectType({
   name: "Trade",
   fields: () => ({
     trade_id: { type: GraphQLInt },
-    user_id: { type: GraphQLInt },
+    user_id: { type: scalarResolvers.UUID },
     synthetic_type: { type: SyntheticEnum },
     currency: { type: scalarResolvers.Currency, defaultValue: "usd" },
     trade_time: { type: scalarResolvers.BigInt },

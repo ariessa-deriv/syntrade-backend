@@ -7,11 +7,13 @@ const {
   GraphQLFloat,
   GraphQLNonNull,
 } = require("graphql");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const databasePool = require("../lib/database");
 const User = require("./object/user");
-const { isEmailValid, isPasswordValid } = require("../lib/input_validations");
+const {
+  checkEmailValidity,
+  checkPasswordValidity,
+} = require("../lib/input_validations");
 const Cookies = require("cookies");
 const transporter = require("../lib/mail");
 const handlebars = require("handlebars");
@@ -25,6 +27,8 @@ const {
   matches_differs_winnings,
   vol_rise_fall_winnings,
 } = require("../lib/pricing");
+const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
@@ -32,7 +36,7 @@ const Mutation = new GraphQLObjectType({
     createTrade: {
       type: GraphQLInt, // return 200 for OK and 400 for other errors
       args: {
-        userId: { type: GraphQLNonNull(GraphQLInt) },
+        userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
         syntheticType: { type: GraphQLNonNull(GraphQLString) },
         optionType: { type: GraphQLNonNull(GraphQLString) },
         wagerAmount: { type: GraphQLNonNull(GraphQLFloat) },
@@ -65,6 +69,7 @@ const Mutation = new GraphQLObjectType({
         const wagerAmount = parseFloat(args.wagerAmount.toFixed(2));
         const ticks = args.ticks;
         const lastDigitPrediction = args.lastDigitPrediction || 0;
+        let isUserIdValid = false;
         let isSyntheticTypeValid = false;
         let isOptionTypeValid = false;
         let isWagerAmountValid = false;
@@ -93,6 +98,9 @@ const Mutation = new GraphQLObjectType({
 
         console.log("cleanedSyntheticModel: ", cleanedSyntheticModel);
 
+        // Check if userId is valid or not
+        isUserIdValid = uuidv4.validate(userId);
+
         // Check if syntheticType is valid or not
         isSyntheticTypeValid = validSyntheticType.includes(syntheticType);
 
@@ -109,6 +117,8 @@ const Mutation = new GraphQLObjectType({
         isLastDigitPredictionValid =
           lastDigitPrediction >= 0 && lastDigitPrediction <= 9;
 
+        console.log("userId: ", userId);
+        console.log("isUserIdValid: ", isUserIdValid);
         console.log("syntheticType: ", syntheticType);
         console.log("isSyntheticValid: ", isSyntheticTypeValid);
         console.log("optionType: ", optionType);
@@ -122,6 +132,7 @@ const Mutation = new GraphQLObjectType({
 
         // Check if syntheticType, optionType, wagerAmount, ticks, and lastDigitPrediction are valid or not
         if (
+          isUserIdValid &&
           isSyntheticTypeValid &&
           isOptionTypeValid &&
           isWagerAmountValid &&
@@ -367,7 +378,7 @@ const Mutation = new GraphQLObjectType({
     changePassword: {
       type: GraphQLInt,
       args: {
-        userId: { type: GraphQLNonNull(GraphQLInt) },
+        userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
         curentPassword: { type: GraphQLNonNull(GraphQLString) },
         newPassword: { type: GraphQLNonNull(GraphQLString) },
       },
@@ -376,7 +387,7 @@ const Mutation = new GraphQLObjectType({
         const currentPassword = args.currentPassword;
         const newPassword = args.newPassword;
 
-        const isUserIdValid = userId > 0;
+        const isUserIdValid = uuidv4.validate(userId);
         const isCurrentPasswordValid = isPasswordValid(currentPassword);
         const isNewPasswordValid = isPasswordValid(newPassword);
         const doesPasswordsMatch = currentPassword === newPassword;
@@ -445,19 +456,24 @@ const Mutation = new GraphQLObjectType({
     deleteUser: {
       type: User,
       args: {
-        userId: { type: GraphQLNonNull(GraphQLInt) },
+        userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        try {
-          // TODO: Get user id from JWT
-          return (
-            await databasePool.query(
-              "DELETE FROM users WHERE user_id = $1 RETURNING *",
-              [args.userId]
-            )
-          ).rows[0];
-        } catch (err) {
-          throw new Error("Failed to insert new user");
+        const userId = args.userId;
+        const isUserIdValid = uuidv4.validate(userId);
+
+        if (isUserIdValid) {
+          try {
+            // TODO: Get user id from JWT
+            return (
+              await databasePool.query(
+                "DELETE FROM users WHERE user_id = $1 RETURNING *",
+                [args.userId]
+              )
+            ).rows[0];
+          } catch (err) {
+            throw new Error("Failed to insert new user");
+          }
         }
       },
     },
@@ -468,32 +484,45 @@ const Mutation = new GraphQLObjectType({
         password: { type: GraphQLNonNull(GraphQLString) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        // Normalise email address
-        const normalisedEmail = args.email.trim().toLowerCase();
+        const email = args.email.trim().toLowerCase();
+        const password = args.password;
+        const isEmailValid = checkEmailValidity(email);
+        const isPasswordValid = checkPasswordValidity(password);
+        let isEmailAlreadyRegistered = true;
 
-        if (isEmailValid(normalisedEmail) && isPasswordValid(args.password)) {
-          // Hash the password
-          const hashedPassword = await bcrypt.hash(args.password, 10);
+        if (isEmailValid && isPasswordValid) {
+          // Create salt
+          const salt = crypto.randomBytes(16).toString("hex");
+
+          // Create hash
+          const hash = crypto
+            .pbkdf2Sync(password, salt, 1000, 64, "sha512")
+            .toString("hex");
 
           // Check if email has been registered or not
           const registeredUser = await databasePool.query(
-            `SELECT * FROM users WHERE email = '${normalisedEmail}';`
+            "SELECT * FROM users WHERE email = $1;",
+            [email]
           );
 
-          if (registeredUser.rowCount > 0) {
+          isEmailAlreadyRegistered = registeredUser.rowCount > 0;
+
+          if (isEmailAlreadyRegistered) {
             throw new Error("Email is already registered");
-          }
+          } else {
+            try {
+              const registerUser = await databasePool.query(
+                `INSERT INTO users (email, salt, hash) VALUES ($1, $2, $3) RETURNING *;`,
+                [email, salt, hash]
+              );
 
-          try {
-            const userToSignup = await databasePool.query(
-              `INSERT INTO users (email, password) VALUES ('${normalisedEmail}', '${hashedPassword}') RETURNING *;`
-            );
-
-            return userToSignup;
-          } catch (err) {
-            console.log(err);
-            throw new Error("Error signing up for a new account");
+              return registerUser;
+            } catch (err) {
+              throw new Error("Error signing up for a new account");
+            }
           }
+        } else {
+          throw new Error("Invalid email or password format");
         }
       },
     },
@@ -506,52 +535,63 @@ const Mutation = new GraphQLObjectType({
       resolve: async (parent, args, context, resolveInfo) => {
         const email = args.email.trim().toLowerCase();
         const password = args.password;
-        const isEmailValid = isEmailValid(email);
-        const isPasswordValid = isPasswordValid(password);
+        const isEmailValid = checkEmailValidity(email);
+        const isPasswordValid = checkPasswordValidity(password);
+        let doesEmailExists = false;
 
         if (isEmailValid && isPasswordValid) {
-          // Find user by email address
-          const userToLogin = await databasePool.query(
-            `SELECT * FROM users WHERE email = '${email}'`
-          );
+          try {
+            // Find user by email address
+            const findUser = await databasePool.query(
+              "SELECT * FROM users WHERE email = $1",
+              [email]
+            );
 
-          // if there is no user, throw an authentication error
-          if (!userToLogin) {
-            throw new Error("Error signing in");
-          }
+            doesEmailExists = findUser.rowCount > 0;
 
-          // if the passwords don't match, throw an authentication error
-          const valid = await bcrypt.compare(
-            password,
-            userToLogin.rows[0]["password"]
-          );
-          if (!valid) {
-            throw new Error("Incorrect password");
-          }
+            // If email address cannot be found in database, throw an  error
+            if (!doesEmailExists) {
+              throw new Error("Email cannot be found in database");
+            } else {
+              const userId = findUser.rows[0]["user_id"];
+              const salt = findUser.rows[0].salt;
+              const hash = findUser.rows[0].hash;
+              const inputHash = crypto
+                .pbkdf2Sync(password, salt, 1000, 64, "sha512")
+                .toString("hex");
+              const passwordsMatch = hash === inputHash;
 
-          // Create JWT
-          const token = jwt.sign(
-            {
-              id: userToLogin.userId,
-            },
-            process.env.JWT_SECRET,
-            {
-              expiresIn: "2h",
+              // If passwords don't match, throw an authentication error
+              if (!passwordsMatch) {
+                throw new Error("Incorrect password");
+              } else {
+                // Create JWT
+                const token = jwt.sign(
+                  {
+                    userId: userId,
+                  },
+                  process.env.JWT_SECRET,
+                  {
+                    expiresIn: "2h",
+                  }
+                );
+
+                console.log("token: ", token);
+
+                // Store JWT as HTTP Only Cookie
+                context.cookies.set("auth-token", token, {
+                  httpOnly: true,
+                  sameSite: "lax",
+                  maxAge: 2 * 60 * 60,
+                  secure: false,
+                });
+
+                return 200;
+              }
             }
-          );
-
-          // Store JWT as HTTP Only Cookie
-          context.cookies.set("auth-token", token, {
-            httpOnly: true,
-            sameSite: "lax",
-            maxAge: 6 * 60 * 60,
-            secure: false,
-          });
-
-          console.log("context", context);
-
-          // create and return the json web token
-          return userToLogin.rows[0];
+          } catch (error) {
+            throw new Error("Failed to login user");
+          }
         }
       },
     },
@@ -632,19 +672,23 @@ const Mutation = new GraphQLObjectType({
     resetBalance: {
       type: GraphQLFloat,
       args: {
-        userId: { type: GraphQLNonNull(GraphQLInt) },
+        userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         const userId = args.userId;
-        try {
-          return (
-            await databasePool.query(
-              "UPDATE users SET wallet_balance = 10000 WHERE user_id = $1 RETURNING wallet_balance",
-              [userId]
-            )
-          ).rows[0].wallet_balance;
-        } catch (err) {
-          throw new Error("Failed to reset user's balance");
+        const isUserIdValid = uuidv4.validate(userId);
+
+        if (isUserIdValid) {
+          try {
+            return (
+              await databasePool.query(
+                "UPDATE users SET wallet_balance = 10000 WHERE user_id = $1 RETURNING wallet_balance",
+                [userId]
+              )
+            ).rows[0].wallet_balance;
+          } catch (err) {
+            throw new Error("Failed to reset user's balance");
+          }
         }
       },
     },
