@@ -43,6 +43,22 @@ GMAIL_USER=""
 GMAIL_PASSWORD=""
 ```
 
+Make sure that your node version is v14.20.0. If your node version is different, install the specific node version
+
+```
+node -v
+
+# v14.20.0
+```
+
+Make sure that your npm version 8.19.3. If your npm version is different, install the specific npm version
+
+```
+npm -v
+
+# 8.19.3
+```
+
 Install packages using npm
 
 ```
