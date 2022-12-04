@@ -13,6 +13,26 @@
 
 </br>
 
+## Prerequisites
+
+Make sure that your node version is v14.20.0. If your node version is different, install the specific node version.
+
+```
+node -v
+
+# v14.20.0
+```
+
+Make sure that your npm version 8.19.3. If your npm version is different, install the specific npm version.
+
+```
+npm -v
+
+# 8.19.3
+```
+
+</br>
+
 ## Run It Locally
 
 Clone repository
@@ -43,32 +63,10 @@ GMAIL_USER=""
 GMAIL_PASSWORD=""
 ```
 
-Make sure that your node version is v14.20.0. If your node version is different, install the specific node version
+Build and start all Docker containers
 
 ```
-node -v
-
-# v14.20.0
-```
-
-Make sure that your npm version 8.19.3. If your npm version is different, install the specific npm version
-
-```
-npm -v
-
-# 8.19.3
-```
-
-Install packages using npm
-
-```
-cd app && npm install && cd ..
-```
-
-Build and start Docker containers in detached mode
-
-```
-docker-compose --env-file .env --file docker-compose.yml up -d
+sh start.sh
 ```
 
 </br>
@@ -106,10 +104,16 @@ You might not need to rebuild all containers again so use the following commands
   Containers with name of `syntrade-backend` or `syntrade-pricing` fails to be build or start up.
 
   **Solution**\
-  Clean your repository by running the `clean.sh` script.
+  Clean your repository by running the `clean.sh` script. This script will remove all Docker containers and images.
 
   ```
   sh clean.sh
+  ```
+
+  Build and start all Docker containers
+
+  ```
+  sh start.sh
   ```
 
   </br>
