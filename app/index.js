@@ -1,11 +1,25 @@
 const dotenv = require("dotenv");
 const express = require("express");
 const cors = require("cors");
-const { graphqlHTTP } = require("express-graphql");
 const schema = require("./graphql/schema");
-const Cookies = require("cookies");
 const EventSource = require("eventsource");
 const cacheClient = require("./lib/cache");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const {
+  ApolloServer,
+  gql,
+  AuthenticationError,
+} = require("apollo-server-express");
+const { graphqlHTTP } = require("express-graphql");
+const Cookies = require("cookies");
+const bodyParser = require("body-parser");
+const databasePool = require("./lib/database");
+const {
+  checkEmailValidity,
+  checkPasswordValidity,
+} = require("./lib/input_validations");
+const crypto = require("crypto");
 
 // Load .env file contents into process.env
 dotenv.config();
@@ -41,59 +55,126 @@ sse.onerror = (e) => {
 
 var app = express();
 
-const getUser = async (token) => {
-  // Example of JWT token structure, type JSON Web Encryption (JWE)
-  // eyJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiSm9lIENvZGVyIn0.5dlp7GmziL2QS06sZgK4mtaqv0_xX4oFUuTDh1zHK4U
-  // JOSE Header
-  // {
-  //   "alg": "HS256",
-  //   "typ": "JWT"
-  // }
-  // JWS Payload
-  // {
-  //  id: user.user_id
-  // }
-  // Secret
-  // thisisasecret
-
-  console.log("token[1]", token[1]);
-
-  // Find user by user_id
-  const userToFind = await databasePool.query(
-    `SELECT * FROM users WHERE user_id = '${token[1]}'`
-  );
-
-  return userToFind.rows[0];
+const corsOptions = {
+  origin: process.env.FRONTEND_DEV_URL,
+  credentials: true,
 };
 
-const verifyToken = (token) => {
-  if (!token) return null;
-  try {
-    return jwt.verify(token, process.env.SECRET);
-  } catch {
-    return null;
+app.use(cors(corsOptions));
+
+app.use(cookieParser());
+
+app.post("/login", bodyParser.json(), async (req, res) => {
+  const email = req.body.email.trim().toLowerCase();
+  const password = req.body.password;
+
+  console.log("email: ", email);
+  console.log("password: ", password);
+
+  const isEmailValid = checkEmailValidity(email);
+  const isPasswordValid = checkPasswordValidity(password);
+  let doesEmailExists = false;
+
+  console.log("isEmailValid: ", isEmailValid);
+  console.log("isPasswordValid: ", isPasswordValid);
+
+  if (isEmailValid && isPasswordValid) {
+    try {
+      // Find user by email address
+      const findUser = await databasePool.query(
+        "SELECT * FROM users WHERE email = $1",
+        [email]
+      );
+
+      doesEmailExists = findUser.rowCount > 0;
+
+      console.log("doesEmailExists: ", doesEmailExists);
+
+      // If email address cannot be found in database, throw an  error
+      if (!doesEmailExists) {
+        res.status(404).send({
+          success: false,
+          message: `Could not find account with email: ${email}`,
+        });
+        return;
+      } else {
+        const userId = findUser.rows[0]["user_id"];
+        const salt = findUser.rows[0].salt;
+        const hash = findUser.rows[0].hash;
+        const inputHash = crypto
+          .pbkdf2Sync(password, salt, 1000, 64, "sha512")
+          .toString("hex");
+        const passwordsMatch = hash === inputHash;
+
+        console.log("passwordsMatch: ", passwordsMatch);
+
+        // If passwords don't match, throw an authentication error
+        if (!passwordsMatch) {
+          res.status(401).send({
+            success: false,
+            message: "Incorrect password",
+          });
+          return;
+        } else {
+          // Create JWT
+          const token = jwt.sign(
+            {
+              userId: userId,
+            },
+            process.env.JWT_SECRET,
+            {
+              expiresIn: "2h",
+            }
+          );
+
+          console.log("token: ", token);
+
+          res.cookie("auth-token", token, {
+            httpOnly: true,
+            secure: false, // true if on HTTPS
+            //domain: 'example.com', //set your domain
+          });
+
+          res.send({
+            success: true,
+          });
+        }
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
   }
-};
+});
 
 app.use(
   "/",
-  cors({
-    origin: process.env.FRONTEND_DEV_URL,
-    credentials: true,
-  }),
   graphqlHTTP(async (req, res, graphQLParams) => ({
     schema: schema,
     graphiql: true,
     context: ({ req, res }) => {
-      const cookies = new Cookies(req, res);
-      const token = cookies.get("auth-token");
-      const user = verifyToken(token);
-      return {
-        cookies,
-        user,
-      };
+      const token = req.cookies["auth-token"] || "";
+      try {
+        return ({ userId } = jwt.verify(token, JWT_SECRET));
+      } catch (e) {
+        throw new AuthenticationError(
+          "Authentication token is invalid, please log in"
+        );
+      }
     },
   }))
 );
 
-app.listen(4000);
+// const server = new ApolloServer({
+//   schema,
+//   context,
+//   cors: false,
+//   playground: true,
+// });
+
+// server.start().then((res) => {
+//   server.applyMiddleware({ app, cors: false });
+// });
+
+app.listen(4000, () =>
+  console.log(`🔥🔥🔥 GraphQL + Express auth tutorial listening on port 4000!`)
+);

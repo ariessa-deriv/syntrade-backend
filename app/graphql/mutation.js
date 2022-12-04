@@ -14,7 +14,7 @@ const {
   checkEmailValidity,
   checkPasswordValidity,
 } = require("../lib/input_validations");
-const Cookies = require("cookies");
+const { serialize } = require("cookie");
 const transporter = require("../lib/mail");
 const handlebars = require("handlebars");
 const path = require("path");
@@ -523,75 +523,6 @@ const Mutation = new GraphQLObjectType({
           }
         } else {
           throw new Error("Invalid email or password format");
-        }
-      },
-    },
-    login: {
-      type: GraphQLInt,
-      args: {
-        email: { type: GraphQLNonNull(scalarResolvers.EmailAddress) },
-        password: { type: GraphQLNonNull(GraphQLString) },
-      },
-      resolve: async (parent, args, context, resolveInfo) => {
-        const email = args.email.trim().toLowerCase();
-        const password = args.password;
-        const isEmailValid = checkEmailValidity(email);
-        const isPasswordValid = checkPasswordValidity(password);
-        let doesEmailExists = false;
-
-        if (isEmailValid && isPasswordValid) {
-          try {
-            // Find user by email address
-            const findUser = await databasePool.query(
-              "SELECT * FROM users WHERE email = $1",
-              [email]
-            );
-
-            doesEmailExists = findUser.rowCount > 0;
-
-            // If email address cannot be found in database, throw an  error
-            if (!doesEmailExists) {
-              throw new Error("Email cannot be found in database");
-            } else {
-              const userId = findUser.rows[0]["user_id"];
-              const salt = findUser.rows[0].salt;
-              const hash = findUser.rows[0].hash;
-              const inputHash = crypto
-                .pbkdf2Sync(password, salt, 1000, 64, "sha512")
-                .toString("hex");
-              const passwordsMatch = hash === inputHash;
-
-              // If passwords don't match, throw an authentication error
-              if (!passwordsMatch) {
-                throw new Error("Incorrect password");
-              } else {
-                // Create JWT
-                const token = jwt.sign(
-                  {
-                    userId: userId,
-                  },
-                  process.env.JWT_SECRET,
-                  {
-                    expiresIn: "2h",
-                  }
-                );
-
-                console.log("token: ", token);
-
-                // Store JWT as HTTP Only Cookie
-                context.cookies.set("auth-token", token, {
-                  httpOnly: true,
-                  sameSite: "lax",
-                  maxAge: 2 * 60 * 60,
-                  secure: false,
-                });
-
-                return 200;
-              }
-            }
-          } catch (error) {
-            throw new Error("Failed to login user");
-          }
         }
       },
     },
