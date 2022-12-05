@@ -11,12 +11,12 @@ const Trade = require("./trade");
 const User = new GraphQLObjectType({
   name: "User",
   fields: () => ({
-    user_id: { type: scalarResolvers.UUID },
+    userId: { type: scalarResolvers.UUID },
     email: { type: scalarResolvers.EmailAddress },
     salt: { type: GraphQLString },
     hash: { type: GraphQLString },
-    wallet_balance: { type: GraphQLFloat, defaultValue: 10000.0 },
-    date_joined: { type: scalarResolvers.BigInt },
+    walletBalance: { type: GraphQLFloat, defaultValue: 10000.0 },
+    dateJoined: { type: scalarResolvers.BigInt },
     trades: {
       type: new GraphQLList(Trade),
     },
