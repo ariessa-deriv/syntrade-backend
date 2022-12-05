@@ -36,7 +36,6 @@ const Mutation = new GraphQLObjectType({
     createTrade: {
       type: GraphQLInt, // return 200 for OK and 400 for other errors
       args: {
-        userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
         syntheticType: { type: GraphQLNonNull(GraphQLString) },
         optionType: { type: GraphQLNonNull(GraphQLString) },
         wagerAmount: { type: GraphQLNonNull(GraphQLFloat) },
@@ -63,7 +62,7 @@ const Mutation = new GraphQLObjectType({
           "volatility_25_fall",
         ];
 
-        const userId = args.userId;
+        const userId = jwt.decode(context.token).userId;
         const syntheticType = args.syntheticType.toLowerCase();
         const optionType = args.optionType.toLowerCase();
         const wagerAmount = parseFloat(args.wagerAmount.toFixed(2));
@@ -99,7 +98,10 @@ const Mutation = new GraphQLObjectType({
         console.log("cleanedSyntheticModel: ", cleanedSyntheticModel);
 
         // Check if userId is valid or not
-        isUserIdValid = uuidv4.validate(userId);
+        isUserIdValid =
+          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
+            userId
+          );
 
         // Check if syntheticType is valid or not
         isSyntheticTypeValid = validSyntheticType.includes(syntheticType);
@@ -378,16 +380,18 @@ const Mutation = new GraphQLObjectType({
     changePassword: {
       type: GraphQLInt,
       args: {
-        userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
         curentPassword: { type: GraphQLNonNull(GraphQLString) },
         newPassword: { type: GraphQLNonNull(GraphQLString) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = args.userId;
+        const userId = jwt.decode(context.token).userId;
         const currentPassword = args.currentPassword;
         const newPassword = args.newPassword;
 
-        const isUserIdValid = uuidv4.validate(userId);
+        const isUserIdValid =
+          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
+            userId
+          );
         const isCurrentPasswordValid = isPasswordValid(currentPassword);
         const isNewPasswordValid = isPasswordValid(newPassword);
         const doesPasswordsMatch = currentPassword === newPassword;
@@ -415,7 +419,7 @@ const Mutation = new GraphQLObjectType({
 
             const currentPasswordInDatabase = await databasePool.query(
               "SELECT password from users WHERE users.user_id = $1;",
-              [args.userId]
+              [userId]
             );
 
             if (currentPasswordInDatabase.rows.length == 1) {
@@ -430,7 +434,7 @@ const Mutation = new GraphQLObjectType({
               if (doesCurrentPasswordsMatch) {
                 const changePassword = await databasePool.query(
                   "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
-                  [args.userId, args.newPassword]
+                  [userId, args.newPassword]
                 );
 
                 console.log("changePassword: ", changePassword);
@@ -459,8 +463,11 @@ const Mutation = new GraphQLObjectType({
         userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = args.userId;
-        const isUserIdValid = uuidv4.validate(userId);
+        const userId = jwt.decode(context.token).userId;
+        const isUserIdValid =
+          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
+            userId
+          );
 
         if (isUserIdValid) {
           try {
@@ -468,7 +475,7 @@ const Mutation = new GraphQLObjectType({
             return (
               await databasePool.query(
                 "DELETE FROM users WHERE user_id = $1 RETURNING *",
-                [args.userId]
+                [userId]
               )
             ).rows[0];
           } catch (err) {
@@ -602,12 +609,12 @@ const Mutation = new GraphQLObjectType({
     },
     resetBalance: {
       type: GraphQLFloat,
-      args: {
-        userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
-      },
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = args.userId;
-        const isUserIdValid = uuidv4.validate(userId);
+        const userId = jwt.decode(context.token).userId;
+        const isUserIdValid =
+          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
+            userId
+          );
 
         if (isUserIdValid) {
           try {

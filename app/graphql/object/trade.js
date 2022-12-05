@@ -11,15 +11,16 @@ const { resolvers: scalarResolvers } = require("graphql-scalars");
 const Trade = new GraphQLObjectType({
   name: "Trade",
   fields: () => ({
-    tradeId: { type: GraphQLInt },
-    userId: { type: scalarResolvers.UUID },
-    syntheticType: { type: SyntheticEnum },
+    trade_id: { type: GraphQLInt },
+    user_id: { type: scalarResolvers.UUID },
+    synthetic_type: { type: SyntheticEnum },
     currency: { type: scalarResolvers.Currency, defaultValue: "usd" },
-    tradeTime: { type: scalarResolvers.BigInt },
-    transactionType: { type: TransactionEnum },
-    tradeResult: { type: GraphQLFloat },
-    currentWalletBalance: { type: GraphQLFloat },
+    transaction_time: { type: scalarResolvers.BigInt },
+    transaction_type: { type: TransactionEnum },
+    transaction_amount: { type: GraphQLFloat },
+    current_wallet_balance: { type: GraphQLFloat },
     ticks: { type: GraphQLInt },
+    current_price: { type: GraphQLFloat },
   }),
 });
 

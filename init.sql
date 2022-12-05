@@ -59,20 +59,20 @@ REFERENCES users (user_id) ON DELETE CASCADE
 -- Create index in table trades
 CREATE INDEX idx_user_id ON trades(user_id);
 
--- Add new users into table users
--- INSERT INTO users (email, salt, hash) 
+-- -- Add new users into table users
+-- INSERT INTO users (user_id, email, salt, hash) 
 -- VALUES 
--- ('test123@gmail.com', '$2b$10$WOwa8qQuia0.MtkXLSTbqOsCBVFhqggB5nW5eo9Q9.rvqZRHFmlRG'),
--- ('johndoe@gmail.com', '$2b$10$Z7wSUnEXLLs1kpo2sSWfwe..pTuruIboPgiZ5U6wWAQTbZcTwlbwC'),
--- ('janet@gmail.com', '$2b$10$eKRKvtkQdIVeVQ30PnsfdOxKc3zAWgezWUM9dKtp.72Q3hHrR7VRq')
+-- (0ea8ccda-b83b-4535-adc7-a33646b72ddfv, 'test123@gmail.com', '$2b$10$WOwa8qQuia0.MtkXLSTbqOsCBVFhqggB5nW5eo9Q9.rvqZRHFmlRG'),
+-- (c8c908a6-b695-48ae-b772-294e40cfcc50, 'johndoe@gmail.com', '$2b$10$Z7wSUnEXLLs1kpo2sSWfwe..pTuruIboPgiZ5U6wWAQTbZcTwlbwC'),
+-- (af582a32-7b38-42ad-974b-a8518479c205, 'janet@gmail.com', '$2b$10$eKRKvtkQdIVeVQ30PnsfdOxKc3zAWgezWUM9dKtp.72Q3hHrR7VRq')
 -- RETURNING *;
 
--- Add new buy trades into table trades
+-- -- Add new buy trades into table trades
 -- INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) 
 -- VALUES 
--- (1, 'boom_100_rise', 1669996752, 'buy', -1000.87, 9000, 5, 9000.00),
--- (2, 'volatility_10_even', 1669996752, 'buy', -2000.99, 8888, 2, 10100.90),
--- (3, 'crash_100_fall', 1669996752, 'buy', -2345.00, 8000, 4, 9777.25)
+-- (0ea8ccda-b83b-4535-adc7-a33646b72ddfv, 'boom_100_rise', 1669996752, 'buy', -1000.87, 9000, 5, 9000.00),
+-- (0ea8ccda-b83b-4535-adc7-a33646b72ddfv, 'volatility_10_even', 1669996752, 'buy', -2000.99, 8888, 2, 10100.90),
+-- (c8c908a6-b695-48ae-b772-294e40cfcc50, 'crash_100_fall', 1669996752, 'buy', -2345.00, 8000, 4, 9777.25)
 -- RETURNING *;
 
 -- Add new sell trades into table trades

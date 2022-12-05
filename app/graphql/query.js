@@ -23,49 +23,37 @@ const {
   vol_rise_fall_payout,
   vol_rise_fall_stake,
 } = require("../lib/pricing");
+const jwt = require("jsonwebtoken");
 
 const query = new GraphQLObjectType({
   name: "Query",
   fields: () => ({
-    user: {
-      type: User,
-      args: { userId: { type: GraphQLNonNull(scalarResolvers.UUID) } },
+    tradesByUserId: {
+      type: GraphQLList(Trade),
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = args.userId;
-        const isUserIdValid = userId >= 1;
+        const userId = jwt.decode(context.token).userId;
+        const isUserIdValid =
+          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
+            userId
+          );
 
         if (isUserIdValid) {
           try {
+            const test = await databasePool.query(
+              `SELECT * FROM trades WHERE trades.user_id = $1;`,
+              [userId]
+            );
+
+            console.log("test: ", test);
+            console.log("test.rows: ", test.rows);
             return (
               await databasePool.query(
-                `SELECT * FROM users WHERE user_id = $1;`,
-                [args.user_id]
+                `SELECT * FROM trades WHERE trades.user_id = $1;`,
+                [userId]
               )
-            ).rows[0];
+            ).rows;
           } catch (err) {
-            throw new Error("Failed to get user by user_id");
-          }
-        }
-      },
-    },
-
-    trade: {
-      type: Trade,
-      args: { trade_id: { type: GraphQLNonNull(GraphQLInt) } },
-      resolve: async (parent, args, context, resolveInfo) => {
-        const tradeId = args.tradeId;
-        const isTradeIdValid = tradeId >= 1;
-
-        if (isTradeIdValid) {
-          try {
-            return (
-              await databasePool.query(
-                `SELECT * FROM trades WHERE trades.trade_id = $1;`,
-                [args.trade_id]
-              )
-            ).rows[0];
-          } catch (err) {
-            throw new Error("Failed to get trade by trade_id");
+            throw new Error("Failed to get trade by user_id");
           }
         }
       },
@@ -205,10 +193,12 @@ const query = new GraphQLObjectType({
 
     currentBalance: {
       type: GraphQLFloat,
-      args: { userId: { type: GraphQLNonNull(GraphQLInt) } },
       resolve: async (parent, args, context, resolveInfo) => {
         const userId = args.userId;
-        const isUserIdValid = userId >= 1;
+        const isUserIdValid =
+          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
+            userId
+          );
 
         if (isUserIdValid) {
           try {

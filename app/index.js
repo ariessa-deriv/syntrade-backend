@@ -68,15 +68,18 @@ app.post("/login", bodyParser.json(), async (req, res) => {
   const email = req.body.email.trim().toLowerCase();
   const password = req.body.password;
 
-  console.log("email: ", email);
-  console.log("password: ", password);
+  console.log("req.body.email: ", req.body.email);
+  console.log("typeof req.body.email: ", typeof req.body.email);
+
+  // console.log("email: ", email);
+  // console.log("password: ", password);
 
   const isEmailValid = checkEmailValidity(email);
   const isPasswordValid = checkPasswordValidity(password);
   let doesEmailExists = false;
 
-  console.log("isEmailValid: ", isEmailValid);
-  console.log("isPasswordValid: ", isPasswordValid);
+  // console.log("isEmailValid: ", isEmailValid);
+  // console.log("isPasswordValid: ", isPasswordValid);
 
   if (isEmailValid && isPasswordValid) {
     try {
@@ -88,7 +91,7 @@ app.post("/login", bodyParser.json(), async (req, res) => {
 
       doesEmailExists = findUser.rowCount > 0;
 
-      console.log("doesEmailExists: ", doesEmailExists);
+      // console.log("doesEmailExists: ", doesEmailExists);
 
       // If email address cannot be found in database, throw an  error
       if (!doesEmailExists) {
@@ -106,7 +109,7 @@ app.post("/login", bodyParser.json(), async (req, res) => {
           .toString("hex");
         const passwordsMatch = hash === inputHash;
 
-        console.log("passwordsMatch: ", passwordsMatch);
+        // console.log("passwordsMatch: ", passwordsMatch);
 
         // If passwords don't match, throw an authentication error
         if (!passwordsMatch) {
@@ -123,14 +126,14 @@ app.post("/login", bodyParser.json(), async (req, res) => {
             },
             process.env.JWT_SECRET,
             {
-              expiresIn: "2h",
+              expiresIn: "8h",
             }
           );
 
           console.log("token: ", token);
 
           res.cookie("auth-token", token, {
-            httpOnly: true,
+            httpOnly: false,
             secure: false, // true if on HTTPS
             //domain: 'example.com', //set your domain
           });
@@ -146,35 +149,29 @@ app.post("/login", bodyParser.json(), async (req, res) => {
   }
 });
 
+app.post("/logout", async (req, res) => {
+  res.cookie("auth-token", "", {
+    httpOnly: false,
+    secure: false, // true if on HTTPS
+    //domain: 'example.com', //set your domain
+  });
+
+  res.send({
+    success: true,
+  });
+});
+
 app.use(
   "/",
-  graphqlHTTP(async (req, res, graphQLParams) => ({
+  graphqlHTTP((req, res, graphQLParams) => ({
     schema: schema,
     graphiql: true,
-    context: ({ req, res }) => {
-      const token = req.cookies["auth-token"] || "";
-      try {
-        return ({ userId } = jwt.verify(token, JWT_SECRET));
-      } catch (e) {
-        throw new AuthenticationError(
-          "Authentication token is invalid, please log in"
-        );
-      }
+    context: {
+      token: req.cookies["auth-token"] || "",
     },
   }))
 );
 
-// const server = new ApolloServer({
-//   schema,
-//   context,
-//   cors: false,
-//   playground: true,
-// });
-
-// server.start().then((res) => {
-//   server.applyMiddleware({ app, cors: false });
-// });
-
 app.listen(4000, () =>
-  console.log(`🔥🔥🔥 GraphQL + Express auth tutorial listening on port 4000!`)
+  console.log(`🔥🔥🔥 GraphQL + Express server listening on port 4000!`)
 );
