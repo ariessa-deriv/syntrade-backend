@@ -29,7 +29,7 @@ services:
       - DEFAULT_EMAIL=${DEFAULT_EMAIL}
     restart: "always"
     depends_on:
-      - syntrade-reverse-proxy
+      - reverse-proxy
     networks:
       - syntrade-network
   app:
