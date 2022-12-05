@@ -12,15 +12,12 @@ const Trade = new GraphQLObjectType({
   name: "Trade",
   fields: () => ({
     trade_id: { type: GraphQLInt },
-    user_id: { type: scalarResolvers.UUID },
     synthetic_type: { type: SyntheticEnum },
     currency: { type: scalarResolvers.Currency, defaultValue: "usd" },
     transaction_time: { type: scalarResolvers.BigInt },
     transaction_type: { type: TransactionEnum },
     transaction_amount: { type: GraphQLFloat },
     current_wallet_balance: { type: GraphQLFloat },
-    ticks: { type: GraphQLInt },
-    current_price: { type: GraphQLFloat },
   }),
 });
 

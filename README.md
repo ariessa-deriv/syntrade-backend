@@ -152,14 +152,12 @@ curl --location --request GET 'http://localhost:4000' \
   {
     tradesByUserId {
       trade_id
-      user_id
       synthetic_type
       currency
       transaction_time
       transaction_type
       transaction_amount
       current_wallet_balance
-      current_price
     }
   }
   ```

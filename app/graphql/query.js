@@ -48,7 +48,7 @@ const query = new GraphQLObjectType({
             console.log("test.rows: ", test.rows);
             return (
               await databasePool.query(
-                `SELECT * FROM trades WHERE trades.user_id = $1;`,
+                `SELECT trade_id, synthetic_type, currency, transaction_time, transaction_type, transaction_amount, current_wallet_balance FROM trades WHERE trades.user_id = $1;`,
                 [userId]
               )
             ).rows;
