@@ -46,8 +46,8 @@ services:
       - postgres
       - redis
       - flask
-    ports:
-      - "4000:4000"
+    # ports:
+    #   - "4000:4000"
     env_file:
       - .env
     volumes:
@@ -92,10 +92,10 @@ services:
     environment:
       - VIRTUAL_HOST=${FLASK_API_URL}
       - LETSENCRYPT_HOST=${FLASK_API_URL}
-    ports:
-      - "5000:5000"
-    expose:
-      - "5000"
+    # ports:
+    #   - "5000:5000"
+    # expose:
+    #   - "5000"
     env_file:
       - .env
     volumes:
