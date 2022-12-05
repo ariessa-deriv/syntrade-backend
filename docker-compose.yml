@@ -10,8 +10,8 @@ services:
       - "certs:/etc/nginx/certs"
       - "/run/docker.sock:/tmp/docker.sock:ro"
     restart: "always"
-    networks:
-      - syntrade-network
+    # networks:
+    #   - syntrade-network
     ports:
       - "80:80"
       - "443:443"
@@ -30,8 +30,8 @@ services:
     restart: "always"
     depends_on:
       - reverse-proxy
-    networks:
-      - syntrade-network
+    # networks:
+    #   - syntrade-network
   app:
     container_name: syntrade-backend
     build:
@@ -53,8 +53,8 @@ services:
     volumes:
       - "./app:/usr/src/app"
     command: npm run dev
-    networks:
-      - syntrade-network
+    # networks:
+    #   - syntrade-network
   postgres:
     container_name: syntrade-database
     image: postgres:10.3
@@ -69,8 +69,8 @@ services:
       - "5432:5432"
     env_file:
       - .env
-    networks:
-      - syntrade-network
+    # networks:
+    #   - syntrade-network
   redis:
     container_name: syntrade-cache
     image: redis:6.2-alpine
@@ -80,8 +80,8 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
     volumes:
       - ./redis:/data
-    networks:
-      - syntrade-network
+    # networks:
+    #   - syntrade-network
   flask:
     container_name: syntrade-pricing
     build:
@@ -101,8 +101,8 @@ services:
     volumes:
       - "./pricing:/usr/src/pricing"
     command: gunicorn app:app --worker-class gevent --bind 0.0.0.0:5000
-    networks:
-      - syntrade-network
+    # networks:
+    #   - syntrade-network
 volumes:
   app:
   postgres:
