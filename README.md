@@ -145,35 +145,21 @@ curl --location --request GET 'http://localhost:4000' \
 
 ### Query
 
-- user
-
-  ```
-  # Get user by user_id
-  {
-    user(user_id: 1) {
-      user_id
-      email
-      password
-      wallet_balance
-      date_joined
-    }
-  }
-  ```
-
 - trade
 
   ```
-  # Get trade by trade id
+  # Get trades by user id
   {
-    trade(trade_id: 1) {
+    tradesByUserId {
       trade_id
       user_id
       synthetic_type
       currency
-      trade_time
+      transaction_time
       transaction_type
-      trade_result
+      transaction_amount
       current_wallet_balance
+      current_price
     }
   }
   ```
@@ -234,12 +220,12 @@ curl --location --request GET 'http://localhost:4000' \
   ```
   # Create new buy trade and execute sell trade when end time is reached
   mutation {
-    createTrade(user_id: 1, synthetic_type: "volatility_10_rise", wager_amount: 198, option_type: "put", ticks: 4)
+    createTrade(synthetic_type: "volatility_10_rise", wager_amount: 198, option_type: "put", ticks: 4)
   }
 
   # Special case: Create buy and sell trades for matches differs trade type
   mutation {
-    createTrade(user_id: 1, synthetic_type: "volatility_25_matches", wager_amount: 198, option_type: "call", ticks: 7, last_digit_prediction: 2)
+    createTrade(synthetic_type: "volatility_25_matches", wager_amount: 198, option_type: "call", ticks: 7, last_digit_prediction: 2)
   }
 
   ```
@@ -253,12 +239,12 @@ curl --location --request GET 'http://localhost:4000' \
   }
   ```
 
-- changePassword (WIP)
+- changePassword
 
   ```
   # Change user's password
   mutation {
-    changePassword(user_id: 1, password: "Abc1234!")
+    changePassword(password: "Abc1234!", newPassword: "test123!")
   }
   ```
 
@@ -267,6 +253,6 @@ curl --location --request GET 'http://localhost:4000' \
   ```
   # Reset wallet balance by user id
   mutation {
-    resetBalance(user_id: 1)
+    resetBalance()
   }
   ```
