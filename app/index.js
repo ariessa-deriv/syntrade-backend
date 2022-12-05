@@ -150,7 +150,7 @@ app.use(
   "/",
   graphqlHTTP((req, res, graphQLParams) => ({
     schema: schema,
-    graphiql: true,
+    graphiql: false,
     context: {
       token: req.cookies["auth-token"] || "",
     },
