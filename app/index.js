@@ -42,12 +42,10 @@ sse.onmessage = async (e) => {
       )
       .ltrim("historical_prices", 0, 59)
       .exec();
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
-sse.onerror = (e) => {
-};
+sse.onerror = (e) => {};
 
 var app = express();
 const origin =
@@ -121,7 +119,7 @@ app.post("/login", bodyParser.json(), async (req, res) => {
             httpOnly: false,
             secure: process.env.NODE_ENV === "development" ? false : true,
             // Production
-            // domain: ".syntrade.xyz", // set your domain
+            domain: ".syntrade.xyz",
           });
 
           res.send({
@@ -140,7 +138,7 @@ app.post("/logout", async (req, res) => {
     httpOnly: false,
     secure: process.env.NODE_ENV === "development" ? false : true,
     // Production
-    // domain: ".syntrade.xyz",
+    domain: ".syntrade.xyz",
   });
 
   res.send({
@@ -153,9 +151,6 @@ app.use(
   graphqlHTTP((req, res, graphQLParams) => ({
     schema: schema,
     graphiql: false,
-    context: {
-      token: req.cookies["auth-token"],
-    },
   }))
 );
 
