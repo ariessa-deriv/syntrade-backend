@@ -6,11 +6,6 @@ const EventSource = require("eventsource");
 const cacheClient = require("./lib/cache");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-const {
-  ApolloServer,
-  gql,
-  AuthenticationError,
-} = require("apollo-server-express");
 const { graphqlHTTP } = require("express-graphql");
 const Cookies = require("cookies");
 const bodyParser = require("body-parser");
@@ -24,7 +19,7 @@ const crypto = require("crypto");
 // Load .env file contents into process.env
 dotenv.config();
 
-const sse = new EventSource("http://0.0.0.0:5000");
+const sse = new EventSource("http://syntrade-pricing");
 sse.onmessage = async (e) => {
   try {
     const data = JSON.parse(e.data);

@@ -4,14 +4,11 @@ services:
     container_name: syntrade-reverse-proxy
     image: jwilder/nginx-proxy:latest
     volumes:
-      - "html:/usr/share/nginx/html"
-      - "dhparam:/etc/nginx/dhparam"
-      - "vhost:/etc/nginx/vhost.d"
-      - "certs:/etc/nginx/certs"
-      - "/run/docker.sock:/tmp/docker.sock:ro"
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
     restart: "always"
-    # networks:
-    #   - syntrade-network
     ports:
       - "80:80"
       - "443:443"
@@ -19,19 +16,17 @@ services:
     container_name: syntrade-letsencrypt-helper
     image: jrcs/letsencrypt-nginx-proxy-companion:latest
     volumes:
-      - "html:/usr/share/nginx/html"
-      - "dhparam:/etc/nginx/dhparam"
-      - "vhost:/etc/nginx/vhost.d"
-      - "certs:/etc/nginx/certs"
-      - "/run/docker.sock:/var/run/docker.sock:ro"
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - NGINX_PROXY_CONTAINER="syntrade-reverse-proxy"
       - DEFAULT_EMAIL=${DEFAULT_EMAIL}
     restart: "always"
     depends_on:
+      reverse-proxy:
+        condition: service_started
+    volumes_from:
       - reverse-proxy
-    # networks:
-    #   - syntrade-network
   app:
     container_name: syntrade-backend
     build:
@@ -40,21 +35,26 @@ services:
     image: syntrade-backend
     restart: always
     environment:
-      - VIRTUAL_HOST=${GRAPHQL_API_URL}
-      - LETSENCRYPT_HOST=${GRAPHQL_API_URL}
+      - VIRTUAL_HOST="api.syntrade.xyz"
+      - LETSENCRYPT_HOST="api.syntrade.xyz"
+      - VIRTUAL_PROTO="https"
+      - VIRTUAL_PORT="443"
     depends_on:
-      - postgres
-      - redis
-      - flask
-    # ports:
-    #   - "4000:4000"
+      letsencrypt:
+        condition: service_started
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      flask:
+        condition: service_started
+    ports:
+      - "4000:4000"
     env_file:
       - .env
     volumes:
       - "./app:/usr/src/app"
     command: npm run dev
-    # networks:
-    #   - syntrade-network
   postgres:
     container_name: syntrade-database
     image: postgres:10.3
@@ -69,8 +69,9 @@ services:
       - "5432:5432"
     env_file:
       - .env
-    # networks:
-    #   - syntrade-network
+    depends_on:
+      letsencrypt:
+        condition: service_started
   redis:
     container_name: syntrade-cache
     image: redis:6.2-alpine
@@ -80,8 +81,9 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
     volumes:
       - ./redis:/data
-    # networks:
-    #   - syntrade-network
+    depends_on:
+      letsencrypt:
+        condition: service_started
   flask:
     container_name: syntrade-pricing
     build:
@@ -90,19 +92,22 @@ services:
     image: syntrade-pricing
     restart: always
     environment:
-      - VIRTUAL_HOST=${FLASK_API_URL}
-      - LETSENCRYPT_HOST=${FLASK_API_URL}
-    # ports:
-    #   - "5000:5000"
-    # expose:
-    #   - "5000"
+      - VIRTUAL_HOST="pricing.syntrade.xyz"
+      - LETSENCRYPT_HOST="pricing.syntrade.xyz"
+      - VIRTUAL_PROTO="https"
+      - VIRTUAL_PORT="443"
+    ports:
+      - "3001:3001"
+    expose:
+      - "3001"
     env_file:
       - .env
     volumes:
       - "./pricing:/usr/src/pricing"
     command: gunicorn app:app --worker-class gevent --bind 0.0.0.0:5000
-    # networks:
-    #   - syntrade-network
+    depends_on:
+      letsencrypt:
+        condition: service_started
 volumes:
   app:
   postgres:
@@ -112,6 +117,7 @@ volumes:
   html:
   vhost:
   dhparam:
+  acme:
 networks:
   default:
     name: syntrade-network

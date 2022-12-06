@@ -109,6 +109,7 @@ def event():
 def stream():
     response= Response(event(), mimetype="application/json")
     response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add('Access-Control-Allow-Methods: GET')
     return response
 
 if __name__ == "__main__":
