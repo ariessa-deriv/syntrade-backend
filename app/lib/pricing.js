@@ -147,14 +147,14 @@ const boom100_winnings = (
     if (exit_price > entry_price) {
       winnings = boom100_payout(stake, ticks)[0];
     } else {
-      winnings = 0;
+      winnings = stake * -1;
     }
   } else {
     if (option_type === "put") {
       if (exit_price < entry_price) {
         winnings = boom100_payout(stake, ticks)[1];
       } else {
-        winnings = 0;
+        winnings = stake * -1;
       }
     } else {
       throw new NotImplementedError("Supported option types: 'call', 'put'");
@@ -308,14 +308,14 @@ const crash100_winnings = (
     if (exit_price > entry_price) {
       winnings = crash100_payout(stake, ticks)[0];
     } else {
-      winnings = 0;
+      winnings = stake *-1;
     }
   } else {
     if (option_type === "put") {
       if (exit_price < entry_price) {
         winnings = crash100_payout(stake, ticks)[1];
       } else {
-        winnings = 0;
+        winnings = stake * -1;
       }
     } else {
       throw new NotImplementedError("Supported option types: 'call', 'put'");
@@ -377,7 +377,7 @@ const even_odd_winnings = (bet, stake, exit_price) => {
     if (Number.parseInt(last_digit % 2) === 0) {
       winnings = 2 * net_stake;
     } else {
-      winnings = 0;
+      winnings = stake * -1;
     }
   }
 
@@ -385,7 +385,7 @@ const even_odd_winnings = (bet, stake, exit_price) => {
     if (Number.parseInt(last_digit % 2) !== 0) {
       winnings = 2 * net_stake;
     } else {
-      winnings = 0;
+      winnings = stake * -1;
     }
   }
   console.log(winnings);
@@ -452,7 +452,7 @@ const matches_differs_winnings = (bet_type, bet_digit, stake, exit_price) => {
         // console.log(winnings);
         return winnings;
       } else {
-        winnings = 0;
+        winnings = stake * -1;
         // console.log(winnings);
         return winnings;
       }
@@ -463,7 +463,7 @@ const matches_differs_winnings = (bet_type, bet_digit, stake, exit_price) => {
           // console.log(winnings);
           return winnings;
         } else {
-          winnings = 0;
+          winnings = stake * -1;
           // console.log(winnings);
           return winnings;
         }
@@ -598,14 +598,14 @@ const vol_rise_fall_winnings = (
     if (exit_price > entry_price) {
       winnings = vol_rise_fall_payout(stake, vol, ticks)[0];
     } else {
-      winnings = 0;
+      winnings = stake * -1;
     }
   } else {
     if (option_type === "put") {
       if (exit_price < entry_price) {
         winnings = vol_rise_fall_payout(stake, vol, ticks)[1];
       } else {
-        winnings = 0;
+        winnings = stake * -1;
       }
     } else {
       throw new NotImplementedError("Supported option types: 'call', 'put'");

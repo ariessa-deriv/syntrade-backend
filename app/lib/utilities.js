@@ -9,12 +9,14 @@ const convertTimezone = (date) => {
   );
 };
 
-// Filter element that has "time":$transaction_time_asia_kuala_lumpur
-const findTransactionByTime = async (transaction_time_asia_kuala_lumpur) => {
+// Filter element that has "time":$transaction_time_utc
+const findTransactionByTime = async (transaction_time_utc) => {
   const historical_list = await cacheClient.lrange("historical_prices", 0, -1);
 
+  console.log("historical_list: ", historical_list);
+
   return historical_list.filter((item) => {
-    if (item.includes(`"time":${transaction_time_asia_kuala_lumpur}`)) {
+    if (item.includes(`"time":${transaction_time_utc}`)) {
       return true;
     }
   });

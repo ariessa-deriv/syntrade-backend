@@ -175,7 +175,7 @@ curl --location --request GET 'http://localhost:4000' \
   ```
   # Get current wallet balance by user id
   {
-    currentBalance(userId: 1)
+    currentBalance
   }
   ```
 
@@ -186,16 +186,6 @@ curl --location --request GET 'http://localhost:4000' \
   # Sign up
   mutation {
     signup(email: "randomemail@gmail.com", password: "Abc4123!") {
-      email,
-      password
-    }
-  }
-  ```
-- login
-  ```
-  # Login
-  mutation {
-    login(email: "randomemail@gmail.com", password: "Abc4123!") {
       email,
       password
     }

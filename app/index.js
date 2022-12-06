@@ -19,6 +19,8 @@ const crypto = require("crypto");
 // Load .env file contents into process.env
 dotenv.config();
 
+console.log("node_env: ", process.env.NODE_ENV);
+
 const sse = new EventSource("https://pricing.syntrade.xyz");
 sse.onmessage = async (e) => {
   try {
@@ -34,7 +36,8 @@ sse.onmessage = async (e) => {
           crash_100: data.current_crash_100_price,
           volatility_10: data.current_vol_10_price,
           volatility_25: data.current_vol_25_price,
-          time: data.time_asia_kuala_lumpur,
+          time_utc: data.time_utc,
+          time_asia_kuala_lumpur: data.time_asia_kuala_lumpur,
         })
       )
       .ltrim("historical_prices", 0, 59)
@@ -49,9 +52,13 @@ sse.onerror = (e) => {
 };
 
 var app = express();
+const origin =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://app.syntrade.xyz";
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
+  origin: origin,
   credentials: true,
 };
 
@@ -114,8 +121,9 @@ app.post("/login", bodyParser.json(), async (req, res) => {
 
           res.cookie("auth-token", token, {
             httpOnly: false,
-            secure: true, // true if on HTTPS
-            domain: ".syntrade.xyz", // set your domain
+            secure: process.env.NODE_ENV === "development" ? false : true,
+            // Production
+            // domain: ".syntrade.xyz", // set your domain
           });
 
           res.send({
@@ -132,8 +140,9 @@ app.post("/login", bodyParser.json(), async (req, res) => {
 app.post("/logout", async (req, res) => {
   res.cookie("auth-token", "", {
     httpOnly: false,
-    secure: true, // true if on HTTPS
-    domain: ".syntrade.xyz", // set your domain
+    secure: process.env.NODE_ENV === "development" ? false : true,
+    // Production
+    // domain: ".syntrade.xyz",
   });
 
   res.send({
@@ -147,7 +156,7 @@ app.use(
     schema: schema,
     graphiql: false,
     context: {
-      token: req.cookies["auth-token"] || "",
+      token: req.cookies["auth-token"],
     },
   }))
 );

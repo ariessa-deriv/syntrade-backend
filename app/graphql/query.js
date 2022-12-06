@@ -30,8 +30,11 @@ const query = new GraphQLObjectType({
   fields: () => ({
     tradesByUserId: {
       type: GraphQLList(Trade),
+      args: {
+        userId: { type: GraphQLNonNull(scalarResolvers.JWT) },
+      },
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = jwt.decode(context.token).userId;
+        const userId = jwt.decode(args.userId).userId;
         const isUserIdValid =
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
             userId
@@ -44,8 +47,6 @@ const query = new GraphQLObjectType({
               [userId]
             );
 
-            console.log("test: ", test);
-            console.log("test.rows: ", test.rows);
             return (
               await databasePool.query(
                 `SELECT trade_id, synthetic_type, currency, transaction_time, transaction_type, transaction_amount, current_wallet_balance FROM trades WHERE trades.user_id = $1;`,
@@ -90,16 +91,16 @@ const query = new GraphQLObjectType({
           (wagerType == "payout" && wagerAmount < 30000.0);
         const isTicksValid = ticks >= 1 && ticks <= 10;
 
-        console.log("\nwagerType: ", wagerType);
-        console.log("isWagerTypeValid: ", isWagerTypeValid);
-        console.log("syntheticModel: ", syntheticModel);
-        console.log("isSyntheticModelValid: ", isSyntheticModelValid);
-        console.log("tradeType: ", tradeType);
-        console.log("isTradeTypeValid: ", isTradeTypeValid);
-        console.log("wagerAmount: ", wagerAmount);
-        console.log("isWagerAmountValid: ", isWagerAmountValid);
-        console.log("ticks: ", ticks);
-        console.log("isTicksValid: ", isTicksValid);
+        // console.log("\nwagerType: ", wagerType);
+        // console.log("isWagerTypeValid: ", isWagerTypeValid);
+        // console.log("syntheticModel: ", syntheticModel);
+        // console.log("isSyntheticModelValid: ", isSyntheticModelValid);
+        // console.log("tradeType: ", tradeType);
+        // console.log("isTradeTypeValid: ", isTradeTypeValid);
+        // console.log("wagerAmount: ", wagerAmount);
+        // console.log("isWagerAmountValid: ", isWagerAmountValid);
+        // console.log("ticks: ", ticks);
+        // console.log("isTicksValid: ", isTicksValid);
 
         if (
           isWagerTypeValid &&
@@ -193,12 +194,16 @@ const query = new GraphQLObjectType({
 
     currentBalance: {
       type: GraphQLFloat,
+      args: {
+        userId: { type: GraphQLNonNull(scalarResolvers.JWT) },
+      },
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = args.userId;
+        const userId = jwt.decode(args.userId).userId;
         const isUserIdValid =
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
             userId
           );
+        console.log("userId cb: ", userId);
 
         if (isUserIdValid) {
           try {

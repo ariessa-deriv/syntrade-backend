@@ -36,6 +36,7 @@ const Mutation = new GraphQLObjectType({
     createTrade: {
       type: GraphQLInt, // return 200 for OK and 400 for other errors
       args: {
+        userId: { type: GraphQLNonNull(scalarResolvers.JWT) },
         syntheticType: { type: GraphQLNonNull(GraphQLString) },
         optionType: { type: GraphQLNonNull(GraphQLString) },
         wagerAmount: { type: GraphQLNonNull(GraphQLFloat) },
@@ -62,7 +63,7 @@ const Mutation = new GraphQLObjectType({
           "volatility_25_fall",
         ];
 
-        const userId = jwt.decode(context.token).userId;
+        const userId = jwt.decode(args.userId).userId;
         const syntheticType = args.syntheticType.toLowerCase();
         const optionType = args.optionType.toLowerCase();
         const wagerAmount = parseFloat(args.wagerAmount.toFixed(2));
@@ -78,6 +79,7 @@ const Mutation = new GraphQLObjectType({
         let isUpdatedWalletBalanceValid = false;
         const buyTransaction = "buy";
         const sellTransaction = "sell";
+        const transactionTimeUtc = Math.floor(Date.now() / 1000);
         const transactionTimeAsiaKualaLumpur =
           Math.floor(Date.parse(convertTimezone(Date.now())) / 1000) - 1;
         const cleanedSyntheticModel = syntheticType.substr(
@@ -89,6 +91,11 @@ const Mutation = new GraphQLObjectType({
         let transaction = [];
         let buyTradeTransaction = [];
         let winnings = 0;
+
+        console.log(
+          "transactionTimeUTC: ",
+          transactionTimeUtc
+        );
 
         console.log(
           "transactionTimeAsiaKualaLumpur: ",
@@ -210,7 +217,7 @@ const Mutation = new GraphQLObjectType({
                   if (transaction.length == 0) {
                     console.log("i: ", i);
                     transaction = await findTransactionByTime(
-                      transactionTimeAsiaKualaLumpur
+                      transactionTimeUtc
                     );
                     console.log("transaction: ", transaction);
                   }
@@ -226,7 +233,7 @@ const Mutation = new GraphQLObjectType({
                   [
                     userId,
                     syntheticType,
-                    transactionTimeAsiaKualaLumpur,
+                    transactionTimeUtc,
                     buyTransaction,
                     wagerAmount,
                     updated_wallet_balance,
@@ -345,7 +352,7 @@ const Mutation = new GraphQLObjectType({
                       [
                         userId,
                         syntheticType,
-                        transactionTimeAsiaKualaLumpur,
+                        transactionTimeUtc,
                         sellTransaction,
                         parseFloat(winnings.toFixed(2)),
                         updated_wallet_balance,
@@ -496,6 +503,8 @@ const Mutation = new GraphQLObjectType({
         const isEmailValid = checkEmailValidity(email);
         const isPasswordValid = checkPasswordValidity(password);
         let isEmailAlreadyRegistered = true;
+
+        console.log("test");
 
         if (isEmailValid && isPasswordValid) {
           // Create salt

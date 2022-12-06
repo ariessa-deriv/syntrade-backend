@@ -89,6 +89,7 @@ def event():
 
         # Current Time
         now = datetime.now()
+        time_utc = now.strftime("%H:%M:%S")
         time_asia_kuala_lumpur = int(now.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%s"))
 
         pricing = json.dumps({
@@ -100,6 +101,7 @@ def event():
             'current_crash_500_price': round(curr_crash_500_price[-1],2), 
             'current_vol_10_price': round(curr_price_vol_10[-1],2), 
             'current_vol_25_price': round(curr_price_vol_25[-1],2),
+            'time_utc': time_utc,
             'time_asia_kuala_lumpur': time_asia_kuala_lumpur})
             
         yield 'data: ' + pricing + '\n\n'
