@@ -21,10 +21,13 @@ dotenv.config();
 
 console.log("node_env: ", process.env.NODE_ENV);
 
-const sse = new EventSource("https://pricing.syntrade.xyz");
+const eventSourceUrl = "https://pricing.syntrade.xyz";
+
+const sse = new EventSource(eventSourceUrl);
 sse.onmessage = async (e) => {
   try {
     const data = JSON.parse(e.data);
+    console.log("data: ", data);
 
     // Store the prices inside a list and trim the list to 60 entries only
     await cacheClient

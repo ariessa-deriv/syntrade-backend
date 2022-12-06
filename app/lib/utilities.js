@@ -16,7 +16,7 @@ const findTransactionByTime = async (transaction_time_utc) => {
   console.log("historical_list: ", historical_list);
 
   return historical_list.filter((item) => {
-    if (item.includes(`"time":${transaction_time_utc}`)) {
+    if (item.includes(`"time_utc":${transaction_time_utc}`)) {
       return true;
     }
   });
