@@ -19,7 +19,7 @@ const crypto = require("crypto");
 // Load .env file contents into process.env
 dotenv.config();
 
-const sse = new EventSource("http://syntrade-pricing");
+const sse = new EventSource("https://pricing.syntrade.xyz");
 sse.onmessage = async (e) => {
   try {
     const data = JSON.parse(e.data);
