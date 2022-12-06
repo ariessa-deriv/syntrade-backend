@@ -79,7 +79,7 @@ const Mutation = new GraphQLObjectType({
         let isUpdatedWalletBalanceValid = false;
         const buyTransaction = "buy";
         const sellTransaction = "sell";
-        const transactionTimeUtc = Math.floor(Date.now() / 1000);
+        const transactionTimeUtc = Math.floor(Date.now() / 1000) - 1;
         const transactionTimeAsiaKualaLumpur =
           Math.floor(Date.parse(convertTimezone(Date.now())) / 1000) - 1;
         const cleanedSyntheticModel = syntheticType.substr(
@@ -92,10 +92,7 @@ const Mutation = new GraphQLObjectType({
         let buyTradeTransaction = [];
         let winnings = 0;
 
-        console.log(
-          "transactionTimeUTC: ",
-          transactionTimeUtc
-        );
+        console.log("transactionTimeUTC: ", transactionTimeUtc);
 
         console.log(
           "transactionTimeAsiaKualaLumpur: ",

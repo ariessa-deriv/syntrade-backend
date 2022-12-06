@@ -308,7 +308,7 @@ const crash100_winnings = (
     if (exit_price > entry_price) {
       winnings = crash100_payout(stake, ticks)[0];
     } else {
-      winnings = stake *-1;
+      winnings = stake * -1;
     }
   } else {
     if (option_type === "put") {
@@ -389,7 +389,7 @@ const even_odd_winnings = (bet, stake, exit_price) => {
     }
   }
   console.log(winnings);
-  return [winnings];
+  return winnings;
 };
 
 // even_odd_winnings("even", 10, 397.1);
