@@ -89,7 +89,7 @@ def event():
 
         # Current Time
         now = datetime.now()
-        time_utc = now.strftime("%H:%M:%S")
+        time_utc = int(now.strftime("%s"))
         time_asia_kuala_lumpur = int(now.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%s"))
 
         pricing = json.dumps({
