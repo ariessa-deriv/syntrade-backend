@@ -20,7 +20,7 @@ services:
       - .env
     volumes:
       - "./app:/usr/src/app"
-    command: npm run dev
+    command: npm run start
   postgres:
     container_name: syntrade-database
     image: postgres:10.3
