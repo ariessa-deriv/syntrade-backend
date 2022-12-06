@@ -1,4 +1,3 @@
-const dotenv = require("dotenv");
 const { resolvers: scalarResolvers } = require("graphql-scalars");
 const {
   GraphQLObjectType,
@@ -14,7 +13,6 @@ const {
   checkEmailValidity,
   checkPasswordValidity,
 } = require("../lib/input_validations");
-const { serialize } = require("cookie");
 const transporter = require("../lib/mail");
 const handlebars = require("handlebars");
 const path = require("path");
@@ -27,14 +25,13 @@ const {
   matches_differs_winnings,
   vol_rise_fall_winnings,
 } = require("../lib/pricing");
-const { v4: uuidv4 } = require("uuid");
 const crypto = require("crypto");
 
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: () => ({
     createTrade: {
-      type: GraphQLInt, // return 200 for OK and 400 for other errors
+      type: GraphQLInt,
       args: {
         userId: { type: GraphQLNonNull(scalarResolvers.JWT) },
         syntheticType: { type: GraphQLNonNull(GraphQLString) },
@@ -92,15 +89,6 @@ const Mutation = new GraphQLObjectType({
         let buyTradeTransaction = [];
         let winnings = 0;
 
-        console.log("transactionTimeUTC: ", transactionTimeUtc);
-
-        console.log(
-          "transactionTimeAsiaKualaLumpur: ",
-          transactionTimeAsiaKualaLumpur
-        );
-
-        console.log("cleanedSyntheticModel: ", cleanedSyntheticModel);
-
         // Check if userId is valid or not
         isUserIdValid =
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
@@ -123,19 +111,6 @@ const Mutation = new GraphQLObjectType({
         isLastDigitPredictionValid =
           lastDigitPrediction >= 0 && lastDigitPrediction <= 9;
 
-        console.log("userId: ", userId);
-        console.log("isUserIdValid: ", isUserIdValid);
-        console.log("syntheticType: ", syntheticType);
-        console.log("isSyntheticValid: ", isSyntheticTypeValid);
-        console.log("optionType: ", optionType);
-        console.log("isOptionTypeValid: ", isOptionTypeValid);
-        console.log("wagerAmount: ", wagerAmount);
-        console.log("isWagerAmountValid: ", isWagerAmountValid);
-        console.log("ticks: ", ticks);
-        console.log("isTicksValid: ", isTicksValid);
-        console.log("lastDigitPrediction: ", lastDigitPrediction);
-        console.log("isLastDigitPrediction: ", isLastDigitPredictionValid);
-
         // Check if syntheticType, optionType, wagerAmount, ticks, and lastDigitPrediction are valid or not
         if (
           isUserIdValid &&
@@ -145,10 +120,6 @@ const Mutation = new GraphQLObjectType({
           isTicksValid &&
           isLastDigitPredictionValid
         ) {
-          console.log(
-            "syntheticType, optionType, wagerAmount, ticks, and lastDigitPrediction are valid"
-          );
-
           try {
             // Get user's current wallet balance
             const current_wallet_balance = await databasePool.query(
@@ -160,36 +131,11 @@ const Mutation = new GraphQLObjectType({
             isCurrentWalletBalanceSufficient =
               current_wallet_balance.rows[0].wallet_balance >= wagerAmount;
 
-            console.log(
-              "current_wallet_balance: ",
-              current_wallet_balance.rows[0].wallet_balance
-            );
-            console.log(
-              "isCurrentWalletBalanceSufficient: ",
-              isCurrentWalletBalanceSufficient
-            );
-
             if (isCurrentWalletBalanceSufficient) {
               // Decrease user's current balance by wagerAmount
               const decrease_wallet_balance = await databasePool.query(
                 "UPDATE users SET wallet_balance = wallet_balance - $2 WHERE user_id = $1 RETURNING wallet_balance",
                 [userId, wagerAmount]
-              );
-
-              console.log(
-                "decrease_wallet_balance: ",
-                decrease_wallet_balance.rows[0].wallet_balance
-              );
-
-              console.log(
-                "current_wallet_balance: ",
-                current_wallet_balance.rows[0].wallet_balance
-              );
-
-              console.log(
-                "current_wallet_balance - wagerAmount: ",
-                parseFloat(current_wallet_balance.rows[0].wallet_balance) -
-                  wagerAmount
               );
 
               const updated_wallet_balance =
@@ -201,28 +147,17 @@ const Mutation = new GraphQLObjectType({
                 updated_wallet_balance ==
                 decrease_wallet_balance.rows[0].wallet_balance;
 
-              console.log(
-                "isUpdatedWalletBalanceValid: ",
-                isUpdatedWalletBalanceValid
-              );
-
               if (isUpdatedWalletBalanceValid) {
                 // Execute function for a maximum of 3 retries
                 for (var i = 0; i < 3; i++) {
-                  console.log("transaction.length: ", transaction.length);
-                  console.log("transaction.length: ", transaction.length);
                   if (transaction.length == 0) {
-                    console.log("i: ", i);
                     transaction = await findTransactionByTime(
                       transactionTimeUtc
                     );
-                    console.log("transaction: ", transaction);
                   }
                 }
 
                 entryPrice = JSON.parse(transaction[0])[cleanedSyntheticModel];
-
-                console.log("entryPrice: ", entryPrice);
 
                 // Insert buy trade inside database
                 const insertBuyTrade = await databasePool.query(
@@ -239,41 +174,18 @@ const Mutation = new GraphQLObjectType({
                   ]
                 );
 
-                console.log("insertBuyTrade: ", insertBuyTrade.rows[0]);
-
                 if (insertBuyTrade.rows.length == 1) {
                   const buyTradeEndTime =
                     parseInt(insertBuyTrade.rows[0].ticks) +
                     parseInt(insertBuyTrade.rows[0].transaction_time);
 
-                  console.log(
-                    "insertBuyTrade.rows[0].ticks: ",
-                    insertBuyTrade.rows[0].ticks
-                  );
-
-                  console.log(
-                    "insertBuyTrade.rows[0].trade_time: ",
-                    insertBuyTrade.rows[0].transaction_time
-                  );
-
-                  console.log("buyTradeEndTime: ", buyTradeEndTime);
-
                   // After buy trade end time is passed, calculate user's winnings
                   setTimeout(async () => {
                     // Execute function for a maximum of three retries
                     for (var i = 0; i < 3; i++) {
-                      console.log(
-                        "buyTradeTransaction.length: ",
-                        buyTradeTransaction.length
-                      );
                       if (buyTradeTransaction.length == 0) {
-                        console.log("i: ", i);
                         buyTradeTransaction = await findTransactionByTime(
                           buyTradeEndTime
-                        );
-                        console.log(
-                          "buyTradeTransaction: ",
-                          buyTradeTransaction
                         );
                       }
                     }
@@ -281,8 +193,6 @@ const Mutation = new GraphQLObjectType({
                     exitPrice = JSON.parse(buyTradeTransaction[0])[
                       cleanedSyntheticModel
                     ];
-
-                    console.log("exitPrice: ", exitPrice);
 
                     if (cleanedSyntheticModel == "boom_100") {
                       winnings = boom100_winnings(
@@ -292,7 +202,6 @@ const Mutation = new GraphQLObjectType({
                         ticks,
                         optionType
                       );
-                      console.log("boom_100 winnings: ", winnings);
                     } else if (cleanedSyntheticModel == "crash_100") {
                       winnings = crash100_winnings(
                         entryPrice,
@@ -301,7 +210,6 @@ const Mutation = new GraphQLObjectType({
                         ticks,
                         optionType
                       );
-                      console.log("crash_100 winnings: ", winnings);
                     } else if (
                       syntheticType.includes("even") ||
                       syntheticType.includes("odd")
@@ -311,7 +219,6 @@ const Mutation = new GraphQLObjectType({
                         wagerAmount,
                         exitPrice
                       );
-                      console.log("even_odd winnings: ", winnings);
                     } else if (
                       syntheticType.includes("matches") ||
                       syntheticType.includes("differs")
@@ -322,15 +229,12 @@ const Mutation = new GraphQLObjectType({
                         wagerAmount,
                         exitPrice
                       );
-                      console.log("matches_differs winnings: ", winnings);
                     } else {
                       const volatilityType = syntheticType.includes(
                         "volatility_10"
                       )
                         ? 10
                         : 25;
-
-                      console.log("volatilityType: ", volatilityType);
 
                       winnings = vol_rise_fall_winnings(
                         entryPrice,
@@ -340,7 +244,6 @@ const Mutation = new GraphQLObjectType({
                         volatilityType,
                         optionType
                       );
-                      console.log("volatility_rise_fall winnings: ", winnings);
                     }
 
                     // Insert sell trade inside database
@@ -349,7 +252,7 @@ const Mutation = new GraphQLObjectType({
                       [
                         userId,
                         syntheticType,
-                        transactionTimeUtc,
+                        buyTradeEndTime,
                         sellTransaction,
                         parseFloat(winnings.toFixed(2)),
                         updated_wallet_balance,
@@ -358,24 +261,19 @@ const Mutation = new GraphQLObjectType({
                       ]
                     );
 
-                    console.log("insertSellTrade: ", insertSellTrade.rows[0]);
-
                     // Notify frontend to display user's winnings or losses
                     if (insertSellTrade.rows.length == 1) {
                       return 200;
                     }
                   }, ticks * 1500);
                 } else {
-                  console.log("Failed to insert buy trade into database");
                   return 400;
                 }
               } else {
-                console.log("Invalid Updated Wallet Balance");
                 return 400;
               }
             }
           } catch (err) {
-            console.log("Error: ", err);
             return 400;
           }
         }
@@ -384,11 +282,12 @@ const Mutation = new GraphQLObjectType({
     changePassword: {
       type: GraphQLInt,
       args: {
-        curentPassword: { type: GraphQLNonNull(GraphQLString) },
+        userId: { type: GraphQLNonNull(scalarResolvers.JWT) },
+        currentPassword: { type: GraphQLNonNull(GraphQLString) },
         newPassword: { type: GraphQLNonNull(GraphQLString) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = jwt.decode(context.token).userId;
+        const userId = jwt.decode(args.userId).userId;
         const currentPassword = args.currentPassword;
         const newPassword = args.newPassword;
 
@@ -399,14 +298,6 @@ const Mutation = new GraphQLObjectType({
         const isCurrentPasswordValid = isPasswordValid(currentPassword);
         const isNewPasswordValid = isPasswordValid(newPassword);
         const doesPasswordsMatch = currentPassword === newPassword;
-
-        console.log("userId: ", userId);
-        console.log("isUserIdValid: ", isUserIdValid);
-        console.log("currentPassword: ", currentPassword);
-        console.log("isCurrentPasswordValid: ", isCurrentPasswordValid);
-        console.log("newPassword: ", newPassword);
-        console.log("isNewPasswordValid: ", isNewPasswordValid);
-        console.log("doesPasswordsMatch: ", doesPasswordsMatch);
 
         if (
           isUserIdValid &&
@@ -430,32 +321,22 @@ const Mutation = new GraphQLObjectType({
               const doesCurrentPasswordsMatch =
                 currentPasswordInDatabase.rows[0].password === currentPassword;
 
-              console.log(
-                "doesCurrentPasswordMatch: ",
-                doesCurrentPasswordsMatch
-              );
-
               if (doesCurrentPasswordsMatch) {
                 const changePassword = await databasePool.query(
                   "UPDATE users SET password = $2 WHERE user_id = $1 RETURNING *",
                   [userId, args.newPassword]
                 );
 
-                console.log("changePassword: ", changePassword);
-
                 if (changePassword.rows.length == 1) {
                   return 200;
                 }
               } else {
-                console.log("Incorrect current password");
                 return 400;
               }
             } else {
-              console.log("User does not exist");
               return 400;
             }
           } catch (err) {
-            console.log("Error: ", err);
             return 400;
           }
         }
@@ -467,7 +348,7 @@ const Mutation = new GraphQLObjectType({
         userId: { type: GraphQLNonNull(scalarResolvers.UUID) },
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = jwt.decode(context.token).userId;
+        const userId = jwt.decode(args.userId).userId;
         const isUserIdValid =
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
             userId
@@ -475,7 +356,6 @@ const Mutation = new GraphQLObjectType({
 
         if (isUserIdValid) {
           try {
-            // TODO: Get user id from JWT
             return (
               await databasePool.query(
                 "DELETE FROM users WHERE user_id = $1 RETURNING *",
@@ -500,8 +380,6 @@ const Mutation = new GraphQLObjectType({
         const isEmailValid = checkEmailValidity(email);
         const isPasswordValid = checkPasswordValidity(password);
         let isEmailAlreadyRegistered = true;
-
-        console.log("test");
 
         if (isEmailValid && isPasswordValid) {
           // Create salt
@@ -552,9 +430,6 @@ const Mutation = new GraphQLObjectType({
         const passwordLength = 12;
         let password = "";
 
-        console.log("email: ", email);
-        console.log("isEmailValid: ", isEmailValid);
-
         if (isEmailValid) {
           // Find user by email
           const registeredUser = await databasePool.query(
@@ -572,15 +447,13 @@ const Mutation = new GraphQLObjectType({
               password += chars.substring(randomNumber, randomNumber + 1);
             }
 
-            console.log("randomPassword: ", password);
-
             // Update user's password with newly generated random password
             await databasePool.query(
               "UPDATE users SET password = $2 WHERE user_id = $1",
               [args.userId, password]
             );
 
-            // TODO: Create password reset link for user
+            // Create password reset link for user
             const passwordResetLink = "https://app.syntrade.xyz/reset_password";
 
             const filePath = path.join(
@@ -604,9 +477,7 @@ const Mutation = new GraphQLObjectType({
 
             transporter.sendMail(mailOptions, function (error, info) {
               if (error) {
-                console.log(error);
               } else {
-                console.log("Email sent: " + info.response);
               }
             });
           }
@@ -615,8 +486,11 @@ const Mutation = new GraphQLObjectType({
     },
     resetBalance: {
       type: GraphQLFloat,
+      args: {
+        userId: { type: GraphQLNonNull(scalarResolvers.JWT) },
+      },
       resolve: async (parent, args, context, resolveInfo) => {
-        const userId = jwt.decode(context.token).userId;
+        const userId = jwt.decode(args.userId).userId;
         const isUserIdValid =
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
             userId

@@ -43,12 +43,10 @@ sse.onmessage = async (e) => {
       .ltrim("historical_prices", 0, 59)
       .exec();
   } catch (error) {
-    console.log("Error: ", error);
   }
 };
 
 sse.onerror = (e) => {
-  console.log("Error:", e.message);
 };
 
 var app = express();

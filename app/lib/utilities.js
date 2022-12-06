@@ -13,8 +13,6 @@ const convertTimezone = (date) => {
 const findTransactionByTime = async (transaction_time_utc) => {
   const historical_list = await cacheClient.lrange("historical_prices", 0, -1);
 
-  console.log("historical_list: ", historical_list);
-
   return historical_list.filter((item) => {
     if (item.includes(`"time_utc":${transaction_time_utc}`)) {
       return true;

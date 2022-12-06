@@ -91,17 +91,6 @@ const query = new GraphQLObjectType({
           (wagerType == "payout" && wagerAmount < 30000.0);
         const isTicksValid = ticks >= 1 && ticks <= 10;
 
-        // console.log("\nwagerType: ", wagerType);
-        // console.log("isWagerTypeValid: ", isWagerTypeValid);
-        // console.log("syntheticModel: ", syntheticModel);
-        // console.log("isSyntheticModelValid: ", isSyntheticModelValid);
-        // console.log("tradeType: ", tradeType);
-        // console.log("isTradeTypeValid: ", isTradeTypeValid);
-        // console.log("wagerAmount: ", wagerAmount);
-        // console.log("isWagerAmountValid: ", isWagerAmountValid);
-        // console.log("ticks: ", ticks);
-        // console.log("isTicksValid: ", isTicksValid);
-
         if (
           isWagerTypeValid &&
           isSyntheticModelValid &&
@@ -203,7 +192,6 @@ const query = new GraphQLObjectType({
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[4][0-9a-fA-F]{3}-[89AB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i.test(
             userId
           );
-        console.log("userId cb: ", userId);
 
         if (isUserIdValid) {
           try {

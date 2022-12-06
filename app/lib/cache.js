@@ -8,10 +8,8 @@ const cacheClient = new Redis(
   `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@syntrade-cache:${process.env.REDIS_PORT}`
 );
 
-cacheClient.on("error", (err) => console.log("Redis Client Error", err));
+cacheClient.on("error", (err) => {});
 
-cacheClient.on("connect", function () {
-  console.log("Redis Client Connected!");
-});
+cacheClient.on("connect", () => {});
 
 module.exports = cacheClient;
