@@ -1,32 +1,32 @@
 version: "3.8"
 services:
-  reverse-proxy:
-    container_name: syntrade-reverse-proxy
-    image: jwilder/nginx-proxy:latest
-    volumes:
-      - certs:/etc/nginx/certs
-      - vhost:/etc/nginx/vhost.d
-      - html:/usr/share/nginx/html
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    restart: "always"
-    ports:
-      - "80:80"
-      - "443:443"
-  letsencrypt:
-    container_name: syntrade-letsencrypt-helper
-    image: jrcs/letsencrypt-nginx-proxy-companion:latest
-    volumes:
-      - acme:/etc/acme.sh
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - NGINX_PROXY_CONTAINER="syntrade-reverse-proxy"
-      - DEFAULT_EMAIL=${DEFAULT_EMAIL}
-    restart: "always"
-    depends_on:
-      reverse-proxy:
-        condition: service_started
-    volumes_from:
-      - reverse-proxy
+  # reverse-proxy:
+  #   container_name: syntrade-reverse-proxy
+  #   image: jwilder/nginx-proxy:latest
+  #   volumes:
+  #     - certs:/etc/nginx/certs
+  #     - vhost:/etc/nginx/vhost.d
+  #     - html:/usr/share/nginx/html
+  #     - /var/run/docker.sock:/tmp/docker.sock:ro
+  #   restart: "always"
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  # letsencrypt:
+  #   container_name: syntrade-letsencrypt-helper
+  #   image: jrcs/letsencrypt-nginx-proxy-companion:latest
+  #   volumes:
+  #     - acme:/etc/acme.sh
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   environment:
+  #     - NGINX_PROXY_CONTAINER="syntrade-reverse-proxy"
+  #     - DEFAULT_EMAIL=${DEFAULT_EMAIL}
+  #   restart: "always"
+  #   depends_on:
+  #     reverse-proxy:
+  #       condition: service_started
+  #   volumes_from:
+  #     - reverse-proxy
   app:
     container_name: syntrade-backend
     build:
@@ -34,14 +34,14 @@ services:
       dockerfile: Dockerfile.backend
     image: syntrade-backend
     restart: always
-    environment:
-      - VIRTUAL_HOST="api.syntrade.xyz"
-      - LETSENCRYPT_HOST="api.syntrade.xyz"
-      - VIRTUAL_PROTO="https"
-      - VIRTUAL_PORT="443"
+    # environment:
+    #   - VIRTUAL_HOST="api.syntrade.xyz"
+    #   - LETSENCRYPT_HOST="api.syntrade.xyz"
+    #   - VIRTUAL_PROTO="https"
+    #   - VIRTUAL_PORT="443"
     depends_on:
-      letsencrypt:
-        condition: service_started
+      # letsencrypt:
+      #   condition: service_started
       postgres:
         condition: service_started
       redis:
@@ -69,9 +69,9 @@ services:
       - "5432:5432"
     env_file:
       - .env
-    depends_on:
-      letsencrypt:
-        condition: service_started
+    # depends_on:
+    #   letsencrypt:
+    #     condition: service_started
   redis:
     container_name: syntrade-cache
     image: redis:6.2-alpine
@@ -81,9 +81,9 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
     volumes:
       - ./redis:/data
-    depends_on:
-      letsencrypt:
-        condition: service_started
+    # depends_on:
+    #   letsencrypt:
+    #     condition: service_started
   flask:
     container_name: syntrade-pricing
     build:
@@ -91,33 +91,33 @@ services:
       dockerfile: Dockerfile.pricing
     image: syntrade-pricing
     restart: always
-    environment:
-      - VIRTUAL_HOST="pricing.syntrade.xyz"
-      - LETSENCRYPT_HOST="pricing.syntrade.xyz"
-      - VIRTUAL_PROTO="https"
-      - VIRTUAL_PORT="443"
+    # environment:
+    #   - VIRTUAL_HOST="pricing.syntrade.xyz"
+    #   - LETSENCRYPT_HOST="pricing.syntrade.xyz"
+    #   - VIRTUAL_PROTO="https"
+    #   - VIRTUAL_PORT="443"
     ports:
-      - "3001:3001"
+      - "5000:5000"
     expose:
-      - "3001"
+      - "5000"
     env_file:
       - .env
     volumes:
       - "./pricing:/usr/src/pricing"
     command: gunicorn app:app --worker-class gevent --bind 0.0.0.0:5000
-    depends_on:
-      letsencrypt:
-        condition: service_started
+    # depends_on:
+    #   letsencrypt:
+    #     condition: service_started
 volumes:
   app:
   postgres:
   redis:
   flask:
-  certs:
-  html:
-  vhost:
-  dhparam:
-  acme:
+  # certs:
+  # html:
+  # vhost:
+  # dhparam:
+  # acme:
 networks:
   default:
     name: syntrade-network
