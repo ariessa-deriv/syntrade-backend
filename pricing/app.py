@@ -99,8 +99,8 @@ def event():
             'current_crash_100_price': round(curr_crash_100_price[-1],2),
             'current_crash_300_price': round(curr_crash_300_price[-1],2), 
             'current_crash_500_price': round(curr_crash_500_price[-1],2), 
-            'current_vol_10_price': round(curr_price_vol_10[-1],2), 
-            'current_vol_25_price': round(curr_price_vol_25[-1],2),
+            'current_volatility_10_price': round(curr_price_vol_10[-1],2), 
+            'current_volatility_25_price': round(curr_price_vol_25[-1],2),
             'time_utc': time_utc,
             'time_asia_kuala_lumpur': time_asia_kuala_lumpur})
             
