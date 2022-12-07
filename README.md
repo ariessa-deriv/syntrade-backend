@@ -7,8 +7,6 @@
 
 ## Project Architecture
 
----
-
 <p align="center">
 <img src="/previews/project_architecture.png"/>
 </p>
@@ -24,8 +22,6 @@ Backend uses server sent event to get real-time price from 4 in-house synthetic 
 
 ## Pricing Data Flow
 
----
-
 Every 1 second, pricing server sends pricing data to both backend and frontend.
 
 - Backend stores the pricing data inside redis. Why? For historical data purposes. Whenever user performs a trade, the price for specified model at a specified time will be taken from redis.
@@ -35,8 +31,6 @@ Every 1 second, pricing server sends pricing data to both backend and frontend.
 
 ## Entity Relationship Diagram
 
----
-
 <p align="center">
 <img src="/previews/entity_relationship_diagram.png"/>
 </p>
@@ -45,11 +39,9 @@ Every 1 second, pricing server sends pricing data to both backend and frontend.
 
 ## Technologies Used
 
----
-
 - [Docker](https://www.docker.com/)
 - [Express](https://www.npmjs.com/package/express)
-- [Flask](https://en.wikipedia.org/wiki/Flask_(web_framework))
+- [Flask](<https://en.wikipedia.org/wiki/Flask_(web_framework)>)
 - [GraphQL](https://www.npmjs.com/package/graphql)
 - [Nginx](https://www.nginx.com/)
 - [NodeJS](https://nodejs.org/en/)
@@ -60,8 +52,6 @@ Every 1 second, pricing server sends pricing data to both backend and frontend.
 </br>
 
 ## Prerequisites
-
----
 
 Make sure that your node version is v14.20.0. If your node version is different, install the specific node version.
 
@@ -82,8 +72,6 @@ npm -v
 </br>
 
 ## Run It Locally
-
----
 
 Clone repository
 
@@ -122,8 +110,6 @@ sh start.sh
 </br>
 
 ## Troubleshooting
-
----
 
 You might not need to rebuild all containers again so use the following commands as you see fit.
 
@@ -187,8 +173,6 @@ You might not need to rebuild all containers again so use the following commands
 
 ## Rest API endpoints
 
----
-
 Example of sending GET request using cURL
 
 ```
@@ -206,8 +190,6 @@ curl --location --request POST 'http://localhost:4000/login' \
 </br>
 
 ## GraphQL API endpoints
-
----
 
 Example of sending GET request using cURL
 
