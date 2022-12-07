@@ -253,6 +253,10 @@ const Mutation = new GraphQLObjectType({
                         [userId, winnings]
                       );
 
+                      const increasedWalletBalance = parseFloat(
+                        increaseBalance.rows[0].wallet_balance
+                      );
+
                       if (increaseBalance.rows.length == 1) {
                         // Insert sell trade inside database
                         const insertSellTrade = await databasePool.query(
@@ -263,7 +267,7 @@ const Mutation = new GraphQLObjectType({
                             buyTradeEndTime,
                             sellTransaction,
                             parseFloat(winnings.toFixed(2)),
-                            updated_wallet_balance,
+                            increasedWalletBalance,
                             ticks,
                             exitPrice,
                           ]
