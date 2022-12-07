@@ -25,7 +25,7 @@ S8 = [100000]
 mu = 0
 sigma_10 = 0.1
 sigma_25 = 0.25
-dt = 2/31536000
+dt = 1/31536000
 
 def event():
     while True:
