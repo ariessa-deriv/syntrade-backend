@@ -5,15 +5,63 @@
 </p>
 </br>
 
+## Project Architecture
+
+---
+
+<p align="center">
+<img src="/previews/project_architecture.png"/>
+</p>
+
+Backend uses server sent event to get real-time price from 4 in-house synthetic models:
+
+- Boom 100
+- Crash 100
+- Volatility 10
+- Volatility 25
+
+</br>
+
+## Pricing Data Flow
+
+---
+
+Every 1 second, pricing server sends pricing data to both backend and frontend.
+
+- Backend stores the pricing data inside redis. Why? For historical data purposes. Whenever user performs a trade, the price for specified model at a specified time will be taken from redis.
+- Whenever the trade page is load for the first time or the synthetic model type is changed, frontend gets historical pricing data from graphql endpoint that is connected to redis. Frontend uses new data that it gets from pricing server sent events to keep on drawing the chart as time progresses.
+
+</br>
+
+## Entity Relationship Diagram
+
+---
+
+<p align="center">
+<img src="/previews/entity_relationship_diagram.png"/>
+</p>
+
+</br>
+
 ## Technologies Used
 
+---
+
+- [Docker](https://www.docker.com/)
 - [Express](https://www.npmjs.com/package/express)
+- [Flask](https://en.wikipedia.org/wiki/Flask_(web_framework))
 - [GraphQL](https://www.npmjs.com/package/graphql)
+- [Nginx](https://www.nginx.com/)
+- [NodeJS](https://nodejs.org/en/)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Redis](https://redis.io/)
 - [Server Sent Events](https://en.wikipedia.org/wiki/Server-sent_events)
 
 </br>
 
 ## Prerequisites
+
+---
 
 Make sure that your node version is v14.20.0. If your node version is different, install the specific node version.
 
@@ -34,6 +82,8 @@ npm -v
 </br>
 
 ## Run It Locally
+
+---
 
 Clone repository
 
@@ -72,6 +122,8 @@ sh start.sh
 </br>
 
 ## Troubleshooting
+
+---
 
 You might not need to rebuild all containers again so use the following commands as you see fit.
 
@@ -133,15 +185,39 @@ You might not need to rebuild all containers again so use the following commands
 
 </br>
 
-## API endpoints
+## Rest API endpoints
+
+---
+
+Example of sending GET request using cURL
+
+```
+curl --location --request POST 'http://localhost:4000/login' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "test@gmail.com",
+    "password": "Abc1234!"
+}'
+```
+
+- login
+- logout
+
+</br>
+
+## GraphQL API endpoints
+
+---
 
 Example of sending GET request using cURL
 
 ```
 curl --location --request GET 'http://localhost:4000' \
 --header 'Content-Type: application/json' \
---data-raw '{"query":"{\n  users {\n    user_id\n    email\n    password\n    wallet_balance\n    date_joined\n    trades {\n      trade_id\n      user_id\n      synthetic_type\n      currency\n      trade_time\n      trade_type\n      trade_result\n      current_wallet_balance\n    }\n  }\n}","variables":{}}' | json_pp
+--data-raw '{"query":" {\n    tradesByUserId (userId: \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwY2Q1MTA2Mi01Y2UxLTQ5ZTAtYjllMy04YWYzZGQ5ODNiNGEiLCJpYXQiOjE2NzAzMTU0ODYsImV4cCI6MTY3MDM0NDI4Nn0.bfBHy-sOXphI0RZPyoiiX-xkI33Wd560O9Fq-wtU0n0\"){\n      trade_id\n      synthetic_type\n      currency\n      transaction_time\n      transaction_type\n      transaction_amount\n      current_wallet_balance\n    }\n  }","variables":{}}' | json_pp
 ```
+
+</br>
 
 ### Query
 
@@ -182,6 +258,7 @@ curl --location --request GET 'http://localhost:4000' \
 ### Mutation
 
 - signup
+
   ```
   # Sign up
   mutation {
@@ -191,49 +268,20 @@ curl --location --request GET 'http://localhost:4000' \
     }
   }
   ```
-- deleteAccount
-  ```
-  # Delete user account by user_id. This will also delete user's trades
-  mutation {
-    deleteUser(user_id: 3) {
-      user_id
-      email
-      wallet_balance
-      date_joined
-    }
-  }
-  ```
+
 - createTrade
 
   ```
   # Create new buy trade and execute sell trade when end time is reached
   mutation {
-    createTrade(synthetic_type: "volatility_10_rise", wager_amount: 198, option_type: "put", ticks: 4)
+    createTrade(user_id: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwY2Q1MTA2Mi01Y2UxLTQ5ZTAtYjllMy04YWYzZGQ5ODNiNGEiLCJpYXQiOjE2NzAzMTU0ODYsImV4cCI6MTY3MDM0NDI4Nn0.bfBHy-sOXphI0RZPyoiiX-xkI33Wd560O9Fq-wtU0n0", synthetic_type: "volatility_10_rise", wager_amount: 198, option_type: "put", ticks: 4)
   }
 
   # Special case: Create buy and sell trades for matches differs trade type
   mutation {
-    createTrade(synthetic_type: "volatility_25_matches", wager_amount: 198, option_type: "call", ticks: 7, last_digit_prediction: 2)
+    createTrade(user_id: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwY2Q1MTA2Mi01Y2UxLTQ5ZTAtYjllMy04YWYzZGQ5ODNiNGEiLCJpYXQiOjE2NzAzMTU0ODYsImV4cCI6MTY3MDM0NDI4Nn0.bfBHy-sOXphI0RZPyoiiX-xkI33Wd560O9Fq-wtU0n0", synthetic_type: "volatility_25_matches", wager_amount: 198, option_type: "call", ticks: 7, last_digit_prediction: 2)
   }
 
-  ```
-
-- resetPassword
-
-  ```
-  # Reset user password
-  mutation {
-    resetPassword(email: "ariessa@besquare.com.my")
-  }
-  ```
-
-- changePassword
-
-  ```
-  # Change user's password
-  mutation {
-    changePassword(password: "Abc1234!", newPassword: "test123!")
-  }
   ```
 
 - resetBalance
@@ -241,6 +289,6 @@ curl --location --request GET 'http://localhost:4000' \
   ```
   # Reset wallet balance by user id
   mutation {
-    resetBalance()
+    resetBalance(user_id: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwY2Q1MTA2Mi01Y2UxLTQ5ZTAtYjllMy04YWYzZGQ5ODNiNGEiLCJpYXQiOjE2NzAzMTU0ODYsImV4cCI6MTY3MDM0NDI4Nn0.bfBHy-sOXphI0RZPyoiiX-xkI33Wd560O9Fq-wtU0n0")
   }
   ```
