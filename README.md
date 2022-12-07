@@ -25,7 +25,7 @@ Backend uses server sent event to get real-time price from 4 in-house synthetic 
 Every 1 second, pricing server sends pricing data to both backend and frontend.
 
 - Backend stores the pricing data inside redis. Why? For historical data purposes. Whenever user performs a trade, the price for specified model at a specified time will be taken from redis.
-- Whenever the trade page is load for the first time or the synthetic model type is changed, frontend gets historical pricing data from graphql endpoint that is connected to redis. Frontend uses new data that it gets from pricing server sent events to keep on drawing the chart as time progresses.
+- Whenever the trade page is load for the first time or the synthetic model type is changed, frontend uses new data that it gets from pricing server sent events to keep on drawing the chart as time progresses.
 
 </br>
 
