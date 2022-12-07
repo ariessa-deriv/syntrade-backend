@@ -288,7 +288,7 @@ const Mutation = new GraphQLObjectType({
                           buyTradeEndTime,
                           sellTransaction,
                           parseFloat(winnings.toFixed(2)),
-                          increasedWalletBalance,
+                          updated_wallet_balance,
                           ticks,
                           exitPrice,
                         ]
