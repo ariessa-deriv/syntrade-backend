@@ -246,24 +246,34 @@ const Mutation = new GraphQLObjectType({
                       );
                     }
 
-                    // Insert sell trade inside database
-                    const insertSellTrade = await databasePool.query(
-                      "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
-                      [
-                        userId,
-                        syntheticType,
-                        buyTradeEndTime,
-                        sellTransaction,
-                        parseFloat(winnings.toFixed(2)),
-                        updated_wallet_balance,
-                        ticks,
-                        exitPrice,
-                      ]
-                    );
+                    // Increase balance if user wins
+                    if (winnings > 0) {
+                      const increaseBalance = await databasePool.query(
+                        "UPDATE users SET wallet_balance = wallet_balance + $2 WHERE user_id = $1 RETURNING wallet_balance",
+                        [userId, winnings]
+                      );
 
-                    // Notify frontend to display user's winnings or losses
-                    if (insertSellTrade.rows.length == 1) {
-                      return 200;
+                      if (increaseBalance.rows.length == 1) {
+                        // Insert sell trade inside database
+                        const insertSellTrade = await databasePool.query(
+                          "INSERT INTO trades (user_id, synthetic_type, transaction_time, transaction_type, transaction_amount, current_wallet_balance, ticks, current_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+                          [
+                            userId,
+                            syntheticType,
+                            buyTradeEndTime,
+                            sellTransaction,
+                            parseFloat(winnings.toFixed(2)),
+                            updated_wallet_balance,
+                            ticks,
+                            exitPrice,
+                          ]
+                        );
+
+                        // Notify frontend to display user's winnings or losses
+                        if (insertSellTrade.rows.length == 1) {
+                          return 200;
+                        }
+                      }
                     }
                   }, ticks * 1500);
                 } else {
