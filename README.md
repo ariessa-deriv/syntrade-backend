@@ -84,23 +84,23 @@ git clone git@github.com:ariessa-deriv/syntrade-backend.git
 Create .env file and insert values
 
 ```
-BACKEND_PORT=""
-POSTGRES_HOST=""
-POSTGRES_PORT=""
-POSTGRES_DATABASE=""
-POSTGRES_USER=""
-POSTGRES_PASSWORD=""
-REDIS_PASSWORD=""
-REDIS_PORT=""
-REDIS_USER=""
-JWT_SECRET=""
-FLASK_HOST=""
-FLASK_PORT=""
-FLASK_SECRET_KEY=""
-FRONTEND_DEV_URL=""
-FRONTEND_URL=""
-GMAIL_USER=""
-GMAIL_PASSWORD=""
+BACKEND_PORT="4000"
+POSTGRES_HOST="syntrade-database"
+POSTGRES_PORT="5432"
+POSTGRES_DATABASE="syntrade"
+POSTGRES_USER="" // Replace this with your own value
+POSTGRES_PASSWORD="" // Replace this with your own value
+REDIS_PASSWORD="" // Replace this with your own value
+REDIS_PORT="6379"
+REDIS_USER="default"
+JWT_SECRET="" // Replace this with your own value
+FLASK_HOST="syntrade-pricing"
+FLASK_PORT="5000"
+FLASK_SECRET_KEY="" // Replace this with your own value
+FRONTEND_DEV_URL="http://localhost:3000"
+FRONTEND_URL="" // Replace this with your own value
+GMAIL_USER="" // Replace this with your own value
+GMAIL_PASSWORD="" // Replace this with your own value
 ```
 
 Build and start all Docker containers
@@ -280,40 +280,6 @@ curl --location --request GET 'http://localhost:4000' \
   
 ## Deployment
 
-Clone repository
-
-```
-git clone git@github.com:ariessa-deriv/syntrade-backend.git
-```
-
-Create .env file and insert values
-
-```
-BACKEND_PORT=""
-POSTGRES_HOST=""
-POSTGRES_PORT=""
-POSTGRES_DATABASE=""
-POSTGRES_USER=""
-POSTGRES_PASSWORD=""
-REDIS_PASSWORD=""
-REDIS_PORT=""
-REDIS_USER=""
-JWT_SECRET=""
-FLASK_HOST=""
-FLASK_PORT=""
-FLASK_SECRET_KEY=""
-FRONTEND_DEV_URL=""
-FRONTEND_URL=""
-GMAIL_USER=""
-GMAIL_PASSWORD=""
-```
-
-Build and start all Docker containers
-
-```
-sh start.sh
-```
-
 ### Subdomain Configurations
 This section assumes that you bought your domain name from Namecheap, using Cloudflare Content Delivery Network as Content Delivery Network, and using Digital Ocean Droplet as Virtual Private Server. This section guides you to setup two subdomains: `api.syntrade.xyz` and `pricing.syntrade.xyz`.
 
@@ -346,46 +312,89 @@ Type    Name                      Content              Proxy status     TTL
 A       api.syntrade.xyz          143.198.218.123      DNS only         Auto
 A       pricing.syntrade.xyz      143.198.218.123      DNS only         Auto
 ```
-
 </br>
 
-- Connect to your Digital Ocean droplet using SSH
+### Virtual Private Server Configurations
+
+1. Connect to your Digital Ocean droplet using SSH
 ```
 Example:
 ssh ariessa@${your-digital-ocean-droplet-ipv4-address}
 ```
+</br>
 
-  - Create SSL certificates using manual DNS challenge for subdomains `api.syntrade.xyz` and `pricing.syntrade.xyz`
-  ```
-  sudo certbot certonly --manual --preferred-challenge dns -d api.syntrade.xyz -d pricing.syntrade.xyz
-  ```
-    - Copy the result of manual DNS challenge for `api.syntrade.xyz` and create TXT record inside Cloudflare domain management
-    ```
-    Example:
+2. Install Nginx
+```
+sudo apt-get install nginx
+```
+</br>
 
-    Type    Name                      Content                                           Proxy status     TTL               
-    TXT     _acme-challenge.api       nOi3zto26NB_XwO5zJSE2w4KHM3sdhujWGj6VuEEImo       DNS only         Auto
-    ```
+3. Clone repository
 
-    - Copy the result of manual DNS challenge for `pricing.syntrade.xyz` and create TXT record inside Cloudflare domain management
-    ```
-    Example:
+```
+git clone git@github.com:ariessa-deriv/syntrade-backend.git
+```
+</br>
 
-    Type    Name                      Content                                           Proxy status     TTL               
-    TXT     _acme-challenge.pricing   nv--fKnH2GEHfw7DF8Jcq7WZMqD7siTBrw_lcVA05mA       DNS only         Auto
-    ```
+4. Create .env file and insert values
 
+```
+BACKEND_PORT="4000"
+POSTGRES_HOST="syntrade-database"
+POSTGRES_PORT="5432"
+POSTGRES_DATABASE="syntrade"
+POSTGRES_USER="" // Replace this with your own value
+POSTGRES_PASSWORD="" // Replace this with your own value
+REDIS_PASSWORD="" // Replace this with your own value
+REDIS_PORT="6379"
+REDIS_USER="default"
+JWT_SECRET="" // Replace this with your own value
+FLASK_HOST="syntrade-pricing"
+FLASK_PORT="5000"
+FLASK_SECRET_KEY="" // Replace this with your own value
+FRONTEND_DEV_URL="http://localhost:3000"
+FRONTEND_URL="" // Replace this with your own value
+GMAIL_USER="" // Replace this with your own value
+GMAIL_PASSWORD="" // Replace this with your own value
+```
+</br>
 
-  - Store the SSL certificates inside `/etc/ssl/nginx` folder
+5. Build and start all Docker containers
 
+```
+sh start.sh
+```
+</br>
 
-  Install Nginx
-  ```
-  sudo apt-get install nginx
-  ```
+6. Create SSL certificates using manual DNS challenge for subdomains `api.syntrade.xyz` and `pricing.syntrade.xyz`
+```
+sudo certbot certonly --manual --preferred-challenge dns -d api.syntrade.xyz -d pricing.syntrade.xyz
+```
+</br>
 
-  Setup Nginx config file and make sure the file has appropriate permissions
-  This config file attaches:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Copy the result of manual DNS challenge for `api.syntrade.xyz` and create TXT record inside Cloudflare domain management
+```
+Example:
+
+Type    Name                      Content                                           Proxy status     TTL               
+TXT     _acme-challenge.api       nOi3zto26NB_XwO5zJSE2w4KHM3sdhujWGj6VuEEImo       DNS only         Auto
+```
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Copy the result of manual DNS challenge for `pricing.syntrade.xyz` and create TXT record inside Cloudflare domain management
+```
+Example:
+
+Type    Name                      Content                                           Proxy status     TTL               
+TXT     _acme-challenge.pricing   nv--fKnH2GEHfw7DF8Jcq7WZMqD7siTBrw_lcVA05mA       DNS only         Auto
+```
+
+</br>
+
+7. Store the SSL certificates inside `/etc/ssl/nginx` folder
+
+</br>
+
+8. Setup Nginx config file named `/etc/nginx/conf.d/local_domains.conf`. This config file attaches:
     - The Docker container named `syntrade-backend` to the subdomain `api.syntrade.xyz`.
     - The Docker container named `syntrade-pricing` to the subdomain `pricing.syntrade.xyz`.
 
@@ -422,13 +431,17 @@ ssh ariessa@${your-digital-ocean-droplet-ipv4-address}
   }
 
   ```
+  
+  </br>
 
-  Allow HTTP connections on port 80
+  9. Allow HTTP connections on port 80
   ```
   sudo ufw allow 80/tcp
   ```
+  
+  </br>
 
-  Allow HTTPS connections on port 443
+  10. Allow HTTPS connections on port 443
   ```
   sudo ufw allow 443/tcp
   ```
