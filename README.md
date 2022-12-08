@@ -53,6 +53,8 @@ Every 1 second, pricing server sends pricing data to both backend and frontend.
 
 ## Prerequisites
 
+All installation instructions are geared for Ubuntu
+
 Make sure that your node version is v14.20.0. If your node version is different, install the specific node version.
 
 ```
@@ -274,3 +276,161 @@ curl --location --request GET 'http://localhost:4000' \
     resetBalance(user_id: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwY2Q1MTA2Mi01Y2UxLTQ5ZTAtYjllMy04YWYzZGQ5ODNiNGEiLCJpYXQiOjE2NzAzMTU0ODYsImV4cCI6MTY3MDM0NDI4Nn0.bfBHy-sOXphI0RZPyoiiX-xkI33Wd560O9Fq-wtU0n0")
   }
   ```
+ </br>
+  
+## Deployment
+
+Clone repository
+
+```
+git clone git@github.com:ariessa-deriv/syntrade-backend.git
+```
+
+Create .env file and insert values
+
+```
+BACKEND_PORT=""
+POSTGRES_HOST=""
+POSTGRES_PORT=""
+POSTGRES_DATABASE=""
+POSTGRES_USER=""
+POSTGRES_PASSWORD=""
+REDIS_PASSWORD=""
+REDIS_PORT=""
+REDIS_USER=""
+JWT_SECRET=""
+FLASK_HOST=""
+FLASK_PORT=""
+FLASK_SECRET_KEY=""
+FRONTEND_DEV_URL=""
+FRONTEND_URL=""
+GMAIL_USER=""
+GMAIL_PASSWORD=""
+```
+
+Build and start all Docker containers
+
+```
+sh start.sh
+```
+
+### Subdomain Configurations
+This section assumes that you bought your domain name from Namecheap, using Cloudflare Content Delivery Network as Content Delivery Network, and using Digital Ocean Droplet as Virtual Private Server. This section guides you to setup two subdomains: `api.syntrade.xyz` and `pricing.syntrade.xyz`.
+
+- Inside your Namecheap domain configuration dashboard, set your nameservers to Cloudflare nameservers.
+```
+Example:
+
+beth.ns.cloudflare.com
+tony.ns.cloudflare.com
+```
+
+</br>
+
+- Inside your Digital Ocean droplet, set A records for both `api.syntrade.xyz` and `pricing.syntrade.xyz` to direct to your Digital Ocean droplet's IPv4 address.
+```
+Example:
+
+Type    Hostname                  Value                           TTL               
+A       api.syntrade.xyz          directs to 143.198.218.123      3600
+A       pricing.syntrade.xyz      directs to 143.198.218.123      3600
+```
+
+</br>
+
+- Inside your Cloudflare domain management, set A records for both `api.syntrade.xyz` and `pricing.syntrade.xyz` to direct to your Digital Ocean droplet's IPv4 address.
+```
+Example:
+
+Type    Name                      Content              Proxy status     TTL               
+A       api.syntrade.xyz          143.198.218.123      DNS only         Auto
+A       pricing.syntrade.xyz      143.198.218.123      DNS only         Auto
+```
+
+</br>
+
+- Connect to your Digital Ocean droplet using SSH
+```
+Example:
+ssh ariessa@${your-digital-ocean-droplet-ipv4-address}
+```
+
+  - Create SSL certificates using manual DNS challenge for subdomains `api.syntrade.xyz` and `pricing.syntrade.xyz`
+  ```
+  sudo certbot certonly --manual --preferred-challenge dns -d api.syntrade.xyz -d pricing.syntrade.xyz
+  ```
+    - Copy the result of manual DNS challenge for `api.syntrade.xyz` and create TXT record inside Cloudflare domain management
+    ```
+    Example:
+
+    Type    Name                      Content                                           Proxy status     TTL               
+    TXT     _acme-challenge.api       nOi3zto26NB_XwO5zJSE2w4KHM3sdhujWGj6VuEEImo       DNS only         Auto
+    ```
+
+    - Copy the result of manual DNS challenge for `pricing.syntrade.xyz` and create TXT record inside Cloudflare domain management
+    ```
+    Example:
+
+    Type    Name                      Content                                           Proxy status     TTL               
+    TXT     _acme-challenge.pricing   nv--fKnH2GEHfw7DF8Jcq7WZMqD7siTBrw_lcVA05mA       DNS only         Auto
+    ```
+
+
+  - Store the SSL certificates inside `/etc/ssl/nginx` folder
+
+
+  Install Nginx
+  ```
+  sudo apt-get install nginx
+  ```
+
+  Setup Nginx config file and make sure the file has appropriate permissions
+  This config file attaches:
+    - The Docker container named `syntrade-backend` to the subdomain `api.syntrade.xyz`.
+    - The Docker container named `syntrade-pricing` to the subdomain `pricing.syntrade.xyz`.
+
+  ```
+  server {
+      listen         80;
+      listen         443 ssl;
+      server_name    api.syntrade.xyz;
+      ssl_certificate /etc/ssl/nginx/cert.pem;
+      ssl_certificate_key /etc/ssl/nginx/privkey.pem;
+
+      location / {
+      set $target http://127.0.0.1:4000;
+      proxy_pass $target;
+    }
+  }
+
+  server {
+      listen         80;
+      listen         443 ssl;
+      server_name    pricing.syntrade.xyz;
+      ssl_certificate /etc/ssl/nginx/fullchain.pem;
+      ssl_certificate_key /etc/ssl/nginx/privkey.pem;
+
+      location / {
+      set $target http://127.0.0.1:5000;
+      proxy_set_header Connection '';
+      proxy_http_version 1.1;
+      chunked_transfer_encoding off;
+      proxy_buffering off;
+      proxy_cache off;
+      proxy_pass $target;
+    }
+  }
+
+  ```
+
+  Allow HTTP connections on port 80
+  ```
+  sudo ufw allow 80/tcp
+  ```
+
+  Allow HTTPS connections on port 443
+  ```
+  sudo ufw allow 443/tcp
+  ```
+
+</br>
